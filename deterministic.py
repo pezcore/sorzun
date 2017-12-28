@@ -2,7 +2,6 @@
 
 import hashlib
 import hmac
-from collections import namedtuple
 from ecc import Point, G, N
 from base58 import b58enc, b58dec
 
@@ -11,18 +10,17 @@ XPUB_B58 = b'\x04\x88\xB2\x1E'
 
 def hash160(msg):
     shadigest = hashlib.new('sha256', msg).digest()
-    return hashlib.new('ripemd160',shadigest).digest()
+    return hashlib.new('ripemd160', shadigest).digest()
 
-class BIP32Node(namedtuple('BIP32Node', 'xkey, depth, parent_fingerprint, index')):
+class BIP32Node:
 
-    @classmethod
-    def from_entropy(cls, seed):
-        'Create and return a BIP32Node from entropy bytes'
-        I = hmac.new(b'Bitcoin seed', seed, 'sha512').digest()
-        k, c = int.from_bytes(I[:32], 'big'), I[32:]
-        assert k and k < N, 'Invalid privkey, use  different entropy'
-        xkey = XPrivKey(k, c)
-        return cls(xkey, 0, b'\0' * 4, 0)
+    __slots__ = 'xkey', 'depth', 'parent_fingerprint', 'index'
+
+    def __init__(self, xkey, depth=0, parent_fingerprint=b'\0' * 4, index=0):
+        self.xkey = xkey
+        self.depth = depth
+        self.parent_fingerprint = parent_fingerprint
+        self.index = index
 
     @classmethod
     def from_b58string(cls, b58string):
@@ -38,6 +36,10 @@ class BIP32Node(namedtuple('BIP32Node', 'xkey, depth, parent_fingerprint, index'
         depth, fingerp, index = b[4], b[5:9], int.from_bytes(b[9:13], 'big')
         return cls(xkey, depth, fingerp, index)
 
+    @classmethod
+    def from_entropy(cls, entbyes):
+        return cls(XPrivKey.from_entropy(entbyes))
+
     def __str__(self):
         vbytes = XPRIV_B58 if isinstance(self.xkey, XPrivKey) else XPUB_B58
         depth  = self.depth.to_bytes(1, 'big')
@@ -50,10 +52,10 @@ class BIP32Node(namedtuple('BIP32Node', 'xkey, depth, parent_fingerprint, index'
     def ckd(self, i):
         xkey = self.xkey.ckd(i)
         depth = self.depth + 1
-        finger = self.xkey.id
+        finger = self.xkey.id[:4]
         return BIP32Node(xkey, depth, finger, i)
 
-class XPubKey():
+class XPubKey:
 
     __slots__ = '_K', '_c'
 
@@ -122,6 +124,14 @@ class XPrivKey(XPubKey):
         c, kbytes = b[-65:-33], b[-33:]
         assert kbytes[0] == 0
         return cls(int.from_bytes(kbytes, 'big'), c)
+
+    @classmethod
+    def from_entropy(cls, seed):
+        'Create and return a BIP32Node from entropy bytes'
+        I = hmac.new(b'Bitcoin seed', seed, 'sha512').digest()
+        k, c = int.from_bytes(I[:32], 'big'), I[32:]
+        assert k and k < N, 'Invalid privkey, use  different entropy'
+        return cls(k, c)
 
     def ckd(self, i):
         plbe = self.keydat if i >= 0x80000000 else (G * self.k).to_bytes()
