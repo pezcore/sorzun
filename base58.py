@@ -43,7 +43,7 @@ def b58dec(s, check=False):
     checksum failure. Returns binary payload.
     '''
     i = 0
-    for char in s:
+    for char in s.rstrip('\n'):
         i = i * 58 + ALPHABET.index(char)
     leading_ones = len(s) - len(s.lstrip(ALPHABET[0]))
     n = math.ceil(i.bit_length() / 8)
