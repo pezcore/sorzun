@@ -55,6 +55,13 @@ class BIP32Node:
         finger = self.xkey.id[:4]
         return BIP32Node(xkey, depth, finger, i)
 
+    def derive(self, path):
+        key = self
+        for x in path.split('/'):
+            x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
+            key = key.ckd(int(x))
+        return key
+
 class XPubKey:
 
     __slots__ = '_K', '_c'
@@ -103,12 +110,6 @@ class XPubKey:
         k = int.from_bytes(IL, 'big')
         return XPubKey(G * k  + self.K, IR)
 
-    def derive(self, path):
-        key = self
-        for x in path.split('/'):
-            x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
-            key = key.ckd(int(x))
-        return key
 
 class XPrivKey(XPubKey):
 
