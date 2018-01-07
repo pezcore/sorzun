@@ -70,13 +70,6 @@ class XPubKey:
         self._K = K
         self._c = c
 
-    @classmethod
-    def from_string(cls, b58string):
-        b = b58dec(b58string, True)
-        c, Kbytes = b[-65:-33], b[-33:]
-        K = Point.from_bytes(Kbytes)
-        return cls(K, c)
-
     @property
     def K(self):
         'Public Key Point'
@@ -118,13 +111,6 @@ class XPrivKey(XPubKey):
     def __init__(self, k, c):
         self._k = k
         self._c = c
-
-    @classmethod
-    def from_string(cls, b58string):
-        b = b58dec(b58string, True)
-        c, kbytes = b[-65:-33], b[-33:]
-        assert kbytes[0] == 0
-        return cls(int.from_bytes(kbytes, 'big'), c)
 
     @classmethod
     def from_entropy(cls, seed):
