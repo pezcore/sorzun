@@ -62,6 +62,10 @@ class BIP32Node:
             key = key.ckd(int(x))
         return key
 
+    def to_pub(self):
+        pf = self.parent_fingerprint
+        return BIP32Node(self.xkey.to_pub(), self.depth, pf, self.index)
+
 class XPubKey:
 
     __slots__ = '_K', '_c'
@@ -126,6 +130,9 @@ class XPrivKey(XPubKey):
         IL, IR = I[:32], I[-32:]
         k = (int.from_bytes(IL, 'big') + self.k) % N
         return XPrivKey(k, IR)
+
+    def to_pub(self):
+        return XPubKey(self.K, self.c)
 
     @property
     def wif(self):
