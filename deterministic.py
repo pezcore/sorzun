@@ -66,6 +66,19 @@ class BIP32Node:
         pf = self.parent_fingerprint
         return BIP32Node(self.xkey.to_pub(), self.depth, pf, self.index)
 
+    @property
+    def xpub(self):
+        'Extended public key object associated with this Node'
+        return self.xkey.to_pub() if isinstance(self.xkey, XPrivKey) else self.xkey
+
+    @property
+    def xpriv(self):
+        'Extended private key object associated with this Node'
+        if isinstance(self.xkey, XPrivKey):
+            return self.xkey
+        else:
+            raise Exception('Cannot obtain private key from public keydata')
+
 class XPubKey:
 
     __slots__ = '_K', '_c'
