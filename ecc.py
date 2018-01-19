@@ -95,12 +95,12 @@ class Point(namedtuple('Point', 'x, y')):
         return Point(
             *from_jacobian(jacobian_add(to_jacobian(self), to_jacobian(b))))
 
-    def to_bytes(self):
+    def __bytes__(self):
         'SEC1 compressed-form byte encoding of the Point as an ECDSA pubkey.'
         prefix = 2 + self.y % 2
         return prefix.to_bytes(1, 'big') + self.x.to_bytes(32, 'big')
 
     def __str__(self):
-        return self.to_bytes().hex()
+        return bytes(self).hex()
 
 G = Point(Gx, Gy)

@@ -9,7 +9,6 @@ def hash160(msg):
     shadigest = hashlib.new('sha256', msg).digest()
     return hashlib.new('ripemd160', shadigest).digest()
 
-
 class XPubKey:
 
     __slots__ = '_K', '_c'
@@ -31,7 +30,7 @@ class XPubKey:
     @property
     def id(self):
         'key ID. HASH160 of compressed serialized PubKey'
-        return hash160(self.K.to_bytes())
+        return hash160(bytes(self.K))
 
     @property
     def c(self):
@@ -40,12 +39,12 @@ class XPubKey:
 
     @property
     def keydat(self):
-        return self.K.to_bytes()
+        return bytes(self.K)
 
     def ckd(self, i):
         'derive child XPubKey'
         assert i < 0x80000000, 'Cannot derive hardend child nodes from xpub'
-        pl = self.K.to_bytes() + i.to_bytes(4, 'big')
+        pl = bytes(self.K) + i.to_bytes(4, 'big')
         I = hmac.new(self.c, pl, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
         k = int.from_bytes(IL, 'big')
@@ -69,7 +68,7 @@ class XPrivKey(XPubKey):
         return cls(k, c)
 
     def ckd(self, i):
-        plbe = self.keydat if i >= 0x80000000 else (G * self.k).to_bytes()
+        plbe = self.keydat if i >= 0x80000000 else bytes(G * self.k)
         I = hmac.new(self.c, plbe + i.to_bytes(4, 'big'), 'sha512').digest()
         IL, IR = I[:32], I[-32:]
         k = (int.from_bytes(IL, 'big') + self.k) % N
