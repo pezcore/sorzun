@@ -105,7 +105,7 @@ class PubBIP32Node(XPubKey):
         self.parent_fingerprint = parent_fingerprint
         self.index = index
 
-    def _ser(self):
+    def __bytes__(self):
         '''get the bytes serialization of the BIP32 payload serialization. This
         is the serialization format without the version bytes prefix.'''
         depth = self.depth.to_bytes(1, 'big')
@@ -113,10 +113,10 @@ class PubBIP32Node(XPubKey):
         chnum = self.index.to_bytes(4, 'big')
         ccode = self.c
         keydt = self.keydat
-        return depth + fingr + chnum + ccode + keydt
+        return self.vbytes + depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
-        return b58enc(self.vbytes + self._ser(), True)
+        return b58enc(bytes(self), True)
 
     def ckd(self, i):
         xkey = super().ckd(i)
