@@ -9,6 +9,19 @@ def hash160(msg):
     shadigest = hashlib.new('sha256', msg).digest()
     return hashlib.new('ripemd160', shadigest).digest()
 
+def node_from_str(s):
+    'Create and return a BIP32Node from a BIP32 xkey string'
+    b = b58dec(s, True)
+    c, Kbytes = b[-65:-33], b[-33:]
+    depth, fingerp, index = b[4], b[5:9], int.from_bytes(b[9:13], 'big')
+    if b[:4] == PrivBIP32Node.vbytes:
+        assert Kbytes[0] == 0
+        k = int.from_bytes(Kbytes, 'big')
+        return PrivBIP32Node(k, c, depth, fingerp, index)
+    elif b[:4] == PubBIP32Node.vbytes:
+        K = Point.from_bytes(Kbytes)
+        return PubBIP32Node(K, c, depth, fingerp, index)
+
 class XPubKey:
 
     __slots__ = '_K', '_c'
