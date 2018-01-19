@@ -5,79 +5,10 @@ import hmac
 from ecc import Point, G, N
 from base58 import b58enc, b58dec
 
-XPRIV_B58 = b'\x04\x88\xAD\xE4'
-XPUB_B58 = b'\x04\x88\xB2\x1E'
-
 def hash160(msg):
     shadigest = hashlib.new('sha256', msg).digest()
     return hashlib.new('ripemd160', shadigest).digest()
 
-class BIP32Node:
-
-    __slots__ = 'xkey', 'depth', 'parent_fingerprint', 'index'
-
-    def __init__(self, xkey, depth=0, parent_fingerprint=b'\0' * 4, index=0):
-        self.xkey = xkey
-        self.depth = depth
-        self.parent_fingerprint = parent_fingerprint
-        self.index = index
-
-    @classmethod
-    def from_b58string(cls, b58string):
-        'Create and return a BIP32Node from a BIP32 xkey string'
-        b = b58dec(b58string, True)
-        c, Kbytes = b[-65:-33], b[-33:]
-        if b[:4] == XPRIV_B58:
-            assert Kbytes[0] == 0
-            xkey = XPrivKey(int.from_bytes(Kbytes, 'big'), c)
-        elif b[:4] == XPUB_B58:
-            K = Point.from_bytes(Kbytes)
-            xkey = XPubKey(K, c)
-        depth, fingerp, index = b[4], b[5:9], int.from_bytes(b[9:13], 'big')
-        return cls(xkey, depth, fingerp, index)
-
-    @classmethod
-    def from_entropy(cls, entbyes):
-        return cls(XPrivKey.from_entropy(entbyes))
-
-    def __str__(self):
-        vbytes = XPRIV_B58 if isinstance(self.xkey, XPrivKey) else XPUB_B58
-        depth  = self.depth.to_bytes(1, 'big')
-        fingr  = self.parent_fingerprint
-        chnum  = self.index.to_bytes(4, 'big')
-        ccode  = self.xkey.c
-        keydat = self.xkey.keydat
-        return b58enc(vbytes + depth + fingr + chnum + ccode + keydat, True)
-
-    def ckd(self, i):
-        xkey = self.xkey.ckd(i)
-        depth = self.depth + 1
-        finger = self.xkey.id[:4]
-        return BIP32Node(xkey, depth, finger, i)
-
-    def derive(self, path):
-        key = self
-        for x in path.split('/'):
-            x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
-            key = key.ckd(int(x))
-        return key
-
-    def to_pub(self):
-        pf = self.parent_fingerprint
-        return BIP32Node(self.xkey.to_pub(), self.depth, pf, self.index)
-
-    @property
-    def xpub(self):
-        'Extended public key object associated with this Node'
-        return self.xkey.to_pub() if isinstance(self.xkey, XPrivKey) else self.xkey
-
-    @property
-    def xpriv(self):
-        'Extended private key object associated with this Node'
-        if isinstance(self.xkey, XPrivKey):
-            return self.xkey
-        else:
-            raise Exception('Cannot obtain private key from public keydata')
 
 class XPubKey:
 
@@ -164,3 +95,52 @@ class XPrivKey(XPubKey):
     @property
     def keydat(self):
         return b'\0' + self.k.to_bytes(32, 'big')
+
+class PubBIP32Node(XPubKey):
+
+    vbytes = b'\x04\x88\xB2\x1E'
+
+    def __init__(self, K, c, depth=0, parent_fingerprint=b'\0' * 4, index=0):
+        super().__init__(K, c)
+        self.depth = depth
+        self.parent_fingerprint = parent_fingerprint
+        self.index = index
+
+    def _ser(self):
+        '''get the bytes serialization of the BIP32 payload serialization. This
+        is the serialization format without the version bytes prefix.'''
+        depth = self.depth.to_bytes(1, 'big')
+        fingr = self.parent_fingerprint
+        chnum = self.index.to_bytes(4, 'big')
+        ccode = self.c
+        keydt = self.keydat
+        return depth + fingr + chnum + ccode + keydt
+
+    def __str__(self):
+        return b58enc(self.vbytes + self._ser(), True)
+
+    def ckd(self, i):
+        xkey = super().ckd(i)
+        depth = self.depth + 1
+        finger = self.id[:4]
+        kdat = xkey.k if isinstance(xkey, XPrivKey) else xkey.K
+        return type(self)(kdat, xkey.c, depth, finger, i)
+
+    def derive(self, path):
+        key = self
+        for x in path.split('/'):
+            x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
+            key = key.ckd(int(x))
+        return key
+
+class PrivBIP32Node(PubBIP32Node, XPrivKey):
+
+    vbytes = b'\x04\x88\xAD\xE4'
+
+    def to_pub(self):
+        'return PubBIP32Node Counterpart'
+        return PubBIP32Node(self.K, self.c, self.depth,
+                            self.parent_fingerprint, self.index)
+
+    def __str__(self):
+        return super().__str__() + '\n' + str(self.to_pub())
