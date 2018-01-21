@@ -3,15 +3,19 @@
 import hashlib
 import os
 
-sm = 'online position fold cactus brown horror accident energy marble ' + \
-     'ocean wait inhale'
-
 wlfile = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
               'english.txt'), 'r')
 wltxt = wlfile.read()
 wordlist_english = wltxt.split('\n')
 
 class Mnemonic(tuple):
+
+    def __new__(cls, *args):
+        if not args:
+            entropy = os.urandom(20)
+            return cls.from_entropy(entropy)
+        else:
+            return super().__new__(cls, *args)
 
     def __str__(self):
         return ' '.join(self)
@@ -54,5 +58,3 @@ class Mnemonic(tuple):
         hexdig = hashlib.sha256(nd).hexdigest()
         csbits = bin(int(hexdig, 16))[2:].zfill(0x100)[:l // 33]
         return h == csbits
-
-m = Mnemonic.from_string(sm)
