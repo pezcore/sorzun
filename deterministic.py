@@ -63,6 +63,12 @@ class XPubKey:
         k = int.from_bytes(IL, 'big')
         return XPubKey(G * k  + self.K, IR)
 
+    def derive(self, path):
+        key = self
+        for x in path.split('/'):
+            x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
+            key = key.ckd(int(x))
+        return key
 
 class XPrivKey(XPubKey):
 
@@ -137,13 +143,6 @@ class PubBIP32Node(XPubKey):
         finger = self.id[:4]
         kdat = xkey.k if isinstance(xkey, XPrivKey) else xkey.K
         return type(self)(kdat, xkey.c, depth, finger, i)
-
-    def derive(self, path):
-        key = self
-        for x in path.split('/'):
-            x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
-            key = key.ckd(int(x))
-        return key
 
 class PrivBIP32Node(PubBIP32Node, XPrivKey):
 
