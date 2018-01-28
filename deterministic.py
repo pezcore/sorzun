@@ -135,7 +135,11 @@ class PubBIP32Node(XPubKey):
         return self.vbytes + depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
-        return b58enc(bytes(self), True)
+        fmt = 'depth    : %d\nindex    : %d\nparent   : %s' \
+              + '\nchaincode: %s\nkeydata  : %s\nBIP32 str: %s'
+        return (fmt % (self.depth, self.index, self.parent_fingerprint.hex(),
+                       self.c.hex(), self.keydat.hex(),
+                       b58enc(bytes(self), True)))
 
     def ckd(self, i):
         xkey = super().ckd(i)
@@ -154,4 +158,5 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
                             self.parent_fingerprint, self.index)
 
     def __str__(self):
-        return super().__str__() + '\n' + str(self.to_pub())
+        return super().__str__() + '\n           '\
+               + b58enc(bytes(self.to_pub()), True)
