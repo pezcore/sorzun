@@ -70,6 +70,10 @@ class XPubKey:
             key = key.ckd(int(x))
         return key
 
+    def __str__(self):
+        return ('chaincode: %s\nkeydata  : %s'
+                % (self.c.hex(), self.keydat.hex()))
+
 class XPrivKey(XPubKey):
 
     __slots__ = '_k', '_c'
@@ -135,11 +139,10 @@ class PubBIP32Node(XPubKey):
         return self.vbytes + depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
-        fmt = 'depth    : %d\nindex    : %d\nparent   : %s' \
-              + '\nchaincode: %s\nkeydata  : %s\nBIP32 str: %s'
-        return (fmt % (self.depth, self.index, self.parent_fingerprint.hex(),
-                       self.c.hex(), self.keydat.hex(),
-                       b58enc(bytes(self), True)))
+        fmt = 'depth    : %d\nindex    : %d\nparent   : %s\n'
+        s1 = fmt % (self.depth, self.index, self.parent_fingerprint.hex())
+        return s1 + super().__str__() + ('\nBIP32 str: %s'
+                                         % b58enc(bytes(self), True))
 
     def ckd(self, i):
         xkey = super().ckd(i)
