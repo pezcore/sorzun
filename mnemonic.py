@@ -44,6 +44,9 @@ class Mnemonic(tuple):
             entropy = os.urandom(20)
             return cls.from_entropy(entropy)
         else:
+            if isinstance(args[0], int):
+                entropy = os.urandom(args[0])
+                return cls.from_entropy(entropy)
             return super().__new__(cls, *args)
 
     def __str__(self):
