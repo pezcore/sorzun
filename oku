@@ -26,7 +26,12 @@ parser.add_argument('keydata', nargs='?', default=None,
                     to use as entropy for generating a random mnemonic, or
                     blank which defaults to 20 bytes of entropy for generating
                     a random mnemonic''')
+parser.add_argument('-n', '--network', help='network name', default='BTC',
+                    choices=['BTC', 'LTC'])
 args = parser.parse_args()
+
+addrpre = {'BTC' : b'\0', 'LTC' : b'0'}
+wifpre = {'BTC' : b'\x80', 'LTC' : b'\xb0'}
 
 print('Root key info ' + '-' * 97)
 
@@ -70,6 +75,7 @@ if not args.wif and isinstance(mend, PrivBIP32Node):
     mend = mend.to_pub()
 for i in args.l:
     xkey = mend.ckd(i)
-    keydat = xkey.wif if args.wif else bytes(xkey.K).hex()
+    addr = xkey.addr(addrpre[args.network])
+    keydat = xkey.wif(wifpre[args.network]) if args.wif else bytes(xkey.K).hex()
     ll = math.ceil(math.log10(args.l.stop))
-    print(('%' + str(ll) + 'd %-34s %s') % (i, xkey.addr, keydat))
+    print(('%' + str(ll) + 'd %-34s %s') % (i, addr, keydat))
