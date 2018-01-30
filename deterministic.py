@@ -35,10 +35,9 @@ class XPubKey:
         'Public Key Point'
         return self._K
 
-    @property
-    def addr(self):
+    def addr(self, vbyte=b'\0'):
         'Bitcoin P2PKH address'
-        return b58enc(b'\0' + self.id, True)
+        return b58enc(vbyte + self.id, True)
 
     @property
     def id(self):
@@ -100,10 +99,9 @@ class XPrivKey(XPubKey):
     def to_pub(self):
         return XPubKey(self.K, self.c)
 
-    @property
-    def wif(self):
+    def wif(self, vbyte=b'\x80'):
         'WIF string privkey'
-        return b58enc(b'\x80' + self.k.to_bytes(32, 'big') + b'\x01', True)
+        return b58enc(vbyte + self.k.to_bytes(32, 'big') + b'\x01', True)
 
     @property
     def k(self):
