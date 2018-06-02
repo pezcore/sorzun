@@ -86,7 +86,8 @@ class XPrivKey(XPubKey):
 
     def ckd(self, i):
         plbe = self.keydat if i >= 0x80000000 else bytes(self.pubkey)
-        I = hmac.new(self._chaincode, plbe + i.to_bytes(4, 'big'), 'sha512').digest()
+        ibytes = i.to_bytes(4, 'big')
+        I = hmac.new(self._chaincode, plbe + ibytes, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
         k = (int.from_bytes(IL, 'big') + self._key) % N
         return XPrivKey(k, IR)
@@ -121,13 +122,15 @@ class PubBIP32Node(XPubKey):
         chnum = self.index.to_bytes(4, 'big')
         ccode = self._chaincode
         keydt = self.keydat
-        return self.vbytes + depth + fingr + chnum + ccode + keydt
+        return  depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
         fmt = 'depth    : %d\nindex    : %d\nparent   : %s\n'
         s1 = fmt % (self.depth, self.index, self.parent_fingerprint.hex())
-        return s1 + super().__str__() + ('\nBIP32 str: %s'
-                                         % b58enc(bytes(self), True))
+        return s1 + super().__str__() + ('\nBIP32 str: %s' % self.bip32_str())
+
+    def bip32_str(self):
+        return b58enc(self.vbytes + bytes(self), True)
 
     def ckd(self, i):
         xkey = super().ckd(i)
@@ -145,6 +148,7 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
         return PubBIP32Node(self.pubkey, self.chaincode, self.depth,
                             self.parent_fingerprint, self.index)
 
-    def __str__(self):
-        return super().__str__() + '\n           '\
-               + b58enc(bytes(self.to_pub()), True)
+    def bip32_str(self):
+        pub = self.to_pub().bip32_str()
+        prv = super().bip32_str()
+        return f"{prv}\n           {pub}"
