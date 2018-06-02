@@ -24,16 +24,16 @@ def node_from_str(s):
 
 class XPubKey:
 
-    __slots__ = '_K', '_c'
+    __slots__ = '_key', '_chaincode'
 
-    def __init__(self, K, c):
-        self._K = K
-        self._c = c
+    def __init__(self, key, chaincode):
+        self._key = key
+        self._chaincode = chaincode
 
     @property
-    def K(self):
+    def pubkey(self):
         'Public Key Point'
-        return self._K
+        return self._key
 
     def addr(self, vbyte=b'\0'):
         'Bitcoin P2PKH address'
@@ -42,25 +42,26 @@ class XPubKey:
     @property
     def id(self):
         'key ID. HASH160 of compressed serialized PubKey'
-        return hash160(bytes(self.K))
+        return hash160(bytes(self.pubkey))
 
     @property
-    def c(self):
+    def chaincode(self):
         'Chain code'
-        return self._c
+        return self._chaincode
 
     @property
     def keydat(self):
-        return bytes(self.K)
+        "Bytes of pub key"
+        return bytes(self.pubkey)
 
     def ckd(self, i):
         'derive child XPubKey'
         assert i < 0x80000000, 'Cannot derive hardend child nodes from xpub'
-        pl = bytes(self.K) + i.to_bytes(4, 'big')
-        I = hmac.new(self.c, pl, 'sha512').digest()
+        pl = bytes(self._key) + i.to_bytes(4, 'big')
+        I = hmac.new(self._chaincode, pl, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
         k = int.from_bytes(IL, 'big')
-        return XPubKey(G * k  + self.K, IR)
+        return XPubKey(G * k  + self._key, IR)
 
     def derive(self, path):
         key = self
@@ -71,50 +72,36 @@ class XPubKey:
 
     def __str__(self):
         return ('chaincode: %s\nkeydata  : %s'
-                % (self.c.hex(), self.keydat.hex()))
+                % (self._chaincode.hex(), self.keydat.hex()))
 
 class XPrivKey(XPubKey):
 
-    __slots__ = '_k', '_c'
-
-    def __init__(self, k, c):
-        self._k = k
-        self._c = c
-
     @classmethod
     def from_entropy(cls, seed):
-        'Create and return a BIP32Node from entropy bytes'
+        'Create and return a XprivKey from entropy bytes'
         I = hmac.new(b'Bitcoin seed', seed, 'sha512').digest()
         k, c = int.from_bytes(I[:32], 'big'), I[32:]
         assert k and k < N, 'Invalid privkey, use  different entropy'
         return cls(k, c)
 
     def ckd(self, i):
-        plbe = self.keydat if i >= 0x80000000 else bytes(G * self.k)
-        I = hmac.new(self.c, plbe + i.to_bytes(4, 'big'), 'sha512').digest()
+        plbe = self.keydat if i >= 0x80000000 else bytes(self.pubkey)
+        I = hmac.new(self._chaincode, plbe + i.to_bytes(4, 'big'), 'sha512').digest()
         IL, IR = I[:32], I[-32:]
-        k = (int.from_bytes(IL, 'big') + self.k) % N
+        k = (int.from_bytes(IL, 'big') + self._key) % N
         return XPrivKey(k, IR)
-
-    def to_pub(self):
-        return XPubKey(self.K, self.c)
 
     def wif(self, vbyte=b'\x80'):
         'WIF string privkey'
-        return b58enc(vbyte + self.k.to_bytes(32, 'big') + b'\x01', True)
+        return b58enc(vbyte + self._key.to_bytes(32, 'big') + b'\x01', True)
 
     @property
-    def k(self):
-        'private key'
-        return self._k
-
-    @property
-    def K(self):
-        return G * self._k
+    def pubkey(self):
+        return G * self._key
 
     @property
     def keydat(self):
-        return b'\0' + self.k.to_bytes(32, 'big')
+        return b'\0' + self._key.to_bytes(32, 'big')
 
 class PubBIP32Node(XPubKey):
 
@@ -132,7 +119,7 @@ class PubBIP32Node(XPubKey):
         depth = self.depth.to_bytes(1, 'big')
         fingr = self.parent_fingerprint
         chnum = self.index.to_bytes(4, 'big')
-        ccode = self.c
+        ccode = self._chaincode
         keydt = self.keydat
         return self.vbytes + depth + fingr + chnum + ccode + keydt
 
@@ -146,8 +133,8 @@ class PubBIP32Node(XPubKey):
         xkey = super().ckd(i)
         depth = self.depth + 1
         finger = self.id[:4]
-        kdat = xkey.k if isinstance(xkey, XPrivKey) else xkey.K
-        return type(self)(kdat, xkey.c, depth, finger, i)
+        kdat = xkey._key
+        return type(self)(kdat, xkey.chaincode, depth, finger, i)
 
 class PrivBIP32Node(PubBIP32Node, XPrivKey):
 
@@ -155,7 +142,7 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
 
     def to_pub(self):
         'return PubBIP32Node Counterpart'
-        return PubBIP32Node(self.K, self.c, self.depth,
+        return PubBIP32Node(self.pubkey, self.chaincode, self.depth,
                             self.parent_fingerprint, self.index)
 
     def __str__(self):
