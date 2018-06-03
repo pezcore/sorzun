@@ -1,11 +1,9 @@
-#pylint:disable=invalid-name
-
 from collections import namedtuple
 
-P = 2 ** 256 - 2 ** 32 - 977
-N =  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
-Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+P  = 2 ** 256 - 2 ** 32 - 977
+N  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
 A, B = 0, 7
 
 def inv(a, n):
@@ -15,7 +13,7 @@ def inv(a, n):
     low, high = a % n, n
     while low > 1:
         r = high//low
-        nm, new = hm-lm*r, high-low*r
+        nm, new = hm - lm * r, high - low * r
         lm, low, hm, high = nm, new, lm, low
     return lm % n
 
@@ -103,4 +101,4 @@ class Point(namedtuple('Point', 'x, y')):
     def __str__(self):
         return bytes(self).hex()
 
-G = Point(Gx, Gy)
+G = Point(GX, GY)
