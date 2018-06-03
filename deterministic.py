@@ -1,11 +1,13 @@
-#pylint:disable=invalid-name
-
 import hashlib
 import hmac
 from ecc import Point, G, N
 from base58 import b58enc, b58dec
 
 def hash160(msg):
+    """
+    Compute standard HASH160 of message bytes. This is the RIPEMD160 hash of
+    the SHA256 hash of they message bytes.
+    """
     shadigest = hashlib.new('sha256', msg).digest()
     return hashlib.new('ripemd160', shadigest).digest()
 
@@ -21,6 +23,8 @@ def node_from_str(s):
     elif b[:4] == PubBIP32Node.vbytes:
         K = Point.from_bytes(Kbytes)
         return PubBIP32Node(K, c, depth, fingerp, index)
+    else:
+        raise ValueError("bad BIP32 node encoding")
 
 class XPubKey:
 
@@ -51,7 +55,7 @@ class XPubKey:
 
     @property
     def keydat(self):
-        "Bytes of pub key"
+        "SEC1 compressed-form byte encoding of the ECDSA pubkey."
         return bytes(self.pubkey)
 
     def ckd(self, i):
@@ -71,8 +75,9 @@ class XPubKey:
         return key
 
     def __str__(self):
-        return ('chaincode: %s\nkeydata  : %s'
-                % (self._chaincode.hex(), self.keydat.hex()))
+        cc = self._chaincode.hex().upper()
+        keydat = self.keydat.hex().upper()
+        return f"chaincode: {cc}\nkeydata  : {keydat}"
 
 class XPrivKey(XPubKey):
 
@@ -121,22 +126,24 @@ class PubBIP32Node(XPubKey):
         self.index = index
 
     def __bytes__(self):
-        '''get the bytes serialization of the BIP32 payload serialization. This
-        is the serialization format without the version bytes prefix.'''
+        "Return the bytes serialization of the BIP32 payload serialization."
         depth = self.depth.to_bytes(1, 'big')
         fingr = self.parent_fingerprint
         chnum = self.index.to_bytes(4, 'big')
         ccode = self._chaincode
         keydt = self.keydat
-        return  depth + fingr + chnum + ccode + keydt
+        return  self.vbytes + depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
-        fmt = 'depth    : %d\nindex    : %d\nparent   : %s\n'
-        s1 = fmt % (self.depth, self.index, self.parent_fingerprint.hex())
-        return s1 + super().__str__() + ('\nBIP32 str: %s' % self.bip32_str())
+        ss = super().__str__()
+        fingr = self.parent_fingerprint.hex().upper()
+        return (f"depth    : {self.depth:d}\nindex    : {self.index:d}\n"
+                f"parent   : {fingr}\n{ss}\n"
+                f"BIP32 str: {self.bip32_str()}")
 
     def bip32_str(self):
-        return b58enc(self.vbytes + bytes(self), True)
+        "BIP32 xpub string encoding"
+        return b58enc(bytes(self), True)
 
     def ckd(self, i):
         xkey = super().ckd(i)
@@ -155,6 +162,7 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
                             self.parent_fingerprint, self.index)
 
     def bip32_str(self):
+        "BIP32 string encodings. Includes both xprv and xpub"
         pub = self.to_pub().bip32_str()
         prv = super().bip32_str()
-        return f"{prv}\n           {pub}"
+        return f"{prv}\n{'':11}{pub}"

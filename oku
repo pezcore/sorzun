@@ -55,16 +55,16 @@ if 'seed' in locals():
     if len(seed) < 56:
         print('seed     : %s' % seed.hex())
     else:
-        print('seed     : %s...%s' % (seed.hex()[:30], seed.hex()[-30:]))
+        hexstr = seed.hex().upper()
+        print('seed     : %s...%s' % (hexstr[:30], hexstr[-30:]))
     r = PrivBIP32Node.from_entropy(seed)
 
 print(r)
 
 if args.path:
     mend = r.derive(args.path) if args.path else r
-    print('')
-    print('Derived Key info ' + '-' * 94)
-    print('path     : %s' % args.path)
+    print(f"\nDerived Key info {'':-<94}")
+    print(f"path     : {args.path}")
     print(mend)
 else:
     mend = r
@@ -76,6 +76,6 @@ if not args.wif and isinstance(mend, PrivBIP32Node):
 for i in args.l:
     xkey = mend.ckd(i)
     addr = xkey.addr(addrpre[args.network])
-    keydat = xkey.wif(wifpre[args.network]) if args.wif else bytes(xkey.pubkey).hex()
+    keydat = xkey.wif(wifpre[args.network]) if args.wif else bytes(xkey.pubkey).hex().upper()
     ll = math.ceil(math.log10(args.l.stop))
     print(('%' + str(ll) + 'd %-34s %s') % (i, addr, keydat))
