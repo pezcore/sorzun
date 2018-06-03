@@ -76,6 +76,10 @@ class XPubKey:
 
 class XPrivKey(XPubKey):
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._pubkey = None
+
     @classmethod
     def from_entropy(cls, seed):
         'Create and return a XprivKey from entropy bytes'
@@ -98,7 +102,9 @@ class XPrivKey(XPubKey):
 
     @property
     def pubkey(self):
-        return G * self._key
+        if self._pubkey is None:
+            self._pubkey = G * self._key
+        return self._pubkey
 
     @property
     def keydat(self):
