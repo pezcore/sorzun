@@ -48,15 +48,12 @@ elif set(args.keydata) <= set('1234567890abcdefABCDEF'):
 
 if 'm' in locals():
     assert m.check(), 'Not a valid Mnemonnic'
-    print('Mnemonic : %s' % str(m))
+    print(f"Mnemonic : {m}")
     seed = m.to_seed()
 
 if 'seed' in locals():
-    if len(seed) < 56:
-        print('seed     : %s' % seed.hex())
-    else:
-        hexstr = seed.hex().upper()
-        print('seed     : %s...%s' % (hexstr[:30], hexstr[-30:]))
+    hexseed = seed.hex().upper()
+    print(f"seed     : {hexseed[:64]}\n           {hexseed[64:]}")
     r = PrivBIP32Node.from_entropy(seed)
 
 print(r)
@@ -76,6 +73,7 @@ if not args.wif and isinstance(mend, PrivBIP32Node):
 for i in args.l:
     xkey = mend.ckd(i)
     addr = xkey.addr(addrpre[args.network])
-    keydat = xkey.wif(wifpre[args.network]) if args.wif else bytes(xkey.pubkey).hex().upper()
+    keydat = (xkey.wif(wifpre[args.network]) if args.wif
+              else bytes(xkey.pubkey).hex().upper())
     ll = math.ceil(math.log10(args.l.stop))
-    print(('%' + str(ll) + 'd %-34s %s') % (i, addr, keydat))
+    print(f"{i:{ll}d} {addr:<34} {keydat}")
