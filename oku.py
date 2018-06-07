@@ -28,7 +28,7 @@ def main():
                         blank which defaults to 20 bytes of entropy for
                         generating a random mnemonic
                         """)
-    parser.add_argument('-n', '--network', help='network name', default='BTC',
+    parser.add_argument('-f', '--format', help='address format', default='BTC',
                         choices=['BTC', 'LTC'])
     args = parser.parse_args()
 
@@ -74,8 +74,8 @@ def main():
         mend = mend.to_pub()
     for i in args.l:
         xkey = mend.ckd(i)
-        addr = xkey.addr(addrpre[args.network])
-        keydat = (xkey.wif(wifpre[args.network]) if args.wif
+        addr = xkey.addr(addrpre[args.format])
+        keydat = (xkey.wif(wifpre[args.format]) if args.wif
                   else bytes(xkey.pubkey).hex().upper())
         print(f"{i:{ll}d} {addr:<34} {keydat}")
 
