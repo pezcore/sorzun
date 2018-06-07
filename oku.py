@@ -68,8 +68,8 @@ def main():
     else:
         mend = r
 
-    print('')
-    print('Leaves ' + '-' * 104)
+    ll = math.ceil(math.log10(args.l.stop))
+    print(f"\nLeaves{'':-<{ll + (82 if args.wif else 96)}}")
     if not args.wif and isinstance(mend, PrivBIP32Node):
         mend = mend.to_pub()
     for i in args.l:
@@ -77,7 +77,6 @@ def main():
         addr = xkey.addr(addrpre[args.network])
         keydat = (xkey.wif(wifpre[args.network]) if args.wif
                   else bytes(xkey.pubkey).hex().upper())
-        ll = math.ceil(math.log10(args.l.stop))
         print(f"{i:{ll}d} {addr:<34} {keydat}")
 
 if __name__ == "__main__":
