@@ -156,13 +156,10 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
 
     vbytes = b'\x04\x88\xAD\xE4'
 
-    def to_pub(self):
-        'return PubBIP32Node Counterpart'
-        return PubBIP32Node(self.pubkey, self.chaincode, self.depth,
-                            self.parent_fingerprint, self.index)
-
     def bip32_str(self):
         "BIP32 string encodings. Includes both xprv and xpub"
-        pub = self.to_pub().bip32_str()
+        # TODO: research how to do this with super
+        pub = PubBIP32Node(self.pubkey, self.chaincode, self.depth,
+                           self.parent_fingerprint, self.index).bip32_str()
         prv = super().bip32_str()
         return f"{prv}\n{'':11}{pub}"

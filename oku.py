@@ -70,8 +70,6 @@ def main():
 
     ll = math.ceil(math.log10(args.l.stop))
     print(f"\nLeaves{'':-<{ll + (82 if args.wif else 96)}}")
-    if not args.wif and isinstance(mend, PrivBIP32Node):
-        mend = mend.to_pub()
     for i in args.l:
         xkey = mend.ckd(i)
         addr = xkey.addr(addrpre[args.format])
