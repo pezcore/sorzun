@@ -53,8 +53,7 @@ class XPubKey:
         'Chain code'
         return self._chaincode
 
-    @property
-    def keydat(self):
+    def __bytes__(self):
         "SEC1 compressed-form byte encoding of the ECDSA pubkey."
         return bytes(self.pubkey)
 
@@ -76,7 +75,7 @@ class XPubKey:
 
     def __str__(self):
         cc = self._chaincode.hex().upper()
-        keydat = self.keydat.hex().upper()
+        keydat = bytes(self).hex().upper()
         return f"chaincode: {cc}\nkeydata  : {keydat}"
 
 class XPrivKey(XPubKey):
@@ -94,7 +93,8 @@ class XPrivKey(XPubKey):
         return cls(k, c)
 
     def ckd(self, i):
-        plbe = self.keydat if i >= 0x80000000 else bytes(self.pubkey)
+        plbe = (XPrivKey.__bytes__(self) if i >= 0x80000000
+                else bytes(self.pubkey))
         ibytes = i.to_bytes(4, 'big')
         I = hmac.new(self._chaincode, plbe + ibytes, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
@@ -111,8 +111,7 @@ class XPrivKey(XPubKey):
             self._pubkey = G * self._key
         return self._pubkey
 
-    @property
-    def keydat(self):
+    def __bytes__(self):
         return b'\0' + self._key.to_bytes(32, 'big')
 
 class PubBIP32Node(XPubKey):
@@ -131,14 +130,15 @@ class PubBIP32Node(XPubKey):
         fingr = self.parent_fingerprint
         chnum = self.index.to_bytes(4, 'big')
         ccode = self._chaincode
-        keydt = self.keydat
+        keydt = super().__bytes__()
         return  self.vbytes + depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
-        ss = super().__str__()
         fingr = self.parent_fingerprint.hex().upper()
+        cc = self._chaincode.hex().upper()
+        keydat = super().__bytes__().hex().upper()
         return (f"depth    : {self.depth:d}\nindex    : {self.index:d}\n"
-                f"parent   : {fingr}\n{ss}\n"
+                f"parent   : {fingr}\nchaincode: {cc}\nkeydata  : {keydat}\n"
                 f"BIP32 str: {self.bip32_str()}")
 
     def bip32_str(self):
