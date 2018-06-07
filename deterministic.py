@@ -8,6 +8,7 @@ import hashlib
 import hmac
 from ecc import Point, G, N
 from base58 import b58enc, b58dec
+from cashaddr import cashenc
 
 def hash160(msg):
     """
@@ -70,6 +71,10 @@ class XPubKey:
         using base58check encoding
         """
         return b58enc(vbyte + self.id, True)
+
+    def cashaddr(self):
+        "Bitcoin Cash cashaddr string"
+        return cashenc(b"\0" + self.id)
 
     @property
     def id(self):
