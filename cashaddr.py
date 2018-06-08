@@ -1,3 +1,5 @@
+from util import convertbits
+
 ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
 GEN = [0x98F2BC8E61, 0x79B76D99E2, 0xF33E5FB3C4, 0xAE2EABE2A8, 0x1E4F43E470]
 
@@ -10,31 +12,6 @@ def polymod(data):
         for i in range(5):
             c ^= GEN[i] if ((c0 >> i) & 1) else 0
     return c ^ 1
-
-def convertbits(data, frombits, tobits, pad=True):
-    """
-    Convert a list of non-negative integers (or bytes object) from `frombits`
-    bit symbols to `tobits`-bit symbols
-    """
-    acc = 0
-    bits = 0
-    ret = []
-    maxv = (1 << tobits) - 1
-    max_acc = (1 << (frombits + tobits - 1)) - 1
-    for value in data:
-        if value < 0 or (value >> frombits):
-            return None
-        acc = ((acc << frombits) | value) & max_acc
-        bits += frombits
-        while bits >= tobits:
-            bits -= tobits
-            ret.append((acc >> bits) & maxv)
-    if pad:
-        if bits:
-            ret.append((acc << (tobits - bits)) & maxv)
-    elif bits >= frombits or ((acc << (tobits - bits)) & maxv):
-        return None
-    return ret
 
 def b32decode(l):
     return [ALPHABET.find(x) for x in l]
@@ -63,11 +40,13 @@ def verify_checksum(prefix, payload):
     return polymod(prefix_expand(prefix) + payload) == 0
 
 def cashenc(pl, prefix="bitcoincash"):
+    "Encode bytes data as cashaddr using human readable prefix `prefix`"
     pl32 = bytes(convertbits(pl, 8, 5))
     checksum = calculate_checksum(prefix, pl32)
     return prefix + ":" + b32encode(pl32 + checksum)
 
 def cashdec(s):
+    "Decode cashaddr encoded string to bytes"
     prefix, pltxt = s.split(":")
     pl32 = bytes(b32decode(pltxt))
     assert verify_checksum(prefix, pl32), "Bad checksum"
