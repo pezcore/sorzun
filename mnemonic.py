@@ -7,11 +7,15 @@ from util import convertbits
 class WordList(tuple):
     """
     A tuple word list with a compact repr. Useable as a full language word-list
-    tuple but doesn\' spam the screen when printed in documentation. This must
+    tuple but doesn't spam the screen when printed in documentation. This must
     be loaded from a text file.
     """
 
     def __new__(cls, fn):
+        """
+        Create a WordList from a text file. This is a tuple of each word in the
+        file
+        """
         fullpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), fn)
         with open(fullpath, "r") as fd:
             tpl = fd.read().split()
@@ -25,7 +29,8 @@ class WordList(tuple):
 WORDLIST_ENGLISH = WordList('english.txt')
 
 class Mnemonic(tuple):
-    '''A BIP39 Mnemonic: a tuple of 3N spoken-language words for carrying seed
+    """
+    A BIP39 Mnemonic: a tuple of 3N spoken-language words for carrying seed
     entropy for generating deterministic wallets. The word sequence itself
     encodes a checksum for error detection. to_seed() provides the main
     mechanism to extract entropy bytes, optionally encrypted with password,
@@ -34,14 +39,15 @@ class Mnemonic(tuple):
     Mnemonics can be created directly from any tuple of strings, single strings
     of whitespace delimited words, or generated randomly using system entropy
     sources.
-    '''
+    """
 
     __slots__ = ()
 
     def __new__(cls, *args):
-        ''' Create A new Mnemonic. If no args are given, randomly generate
-        Mnemonic from system entropy.
-        '''
+        """
+        Create A new Mnemonic. If no args are given, randomly generate Mnemonic
+        from system entropy.
+        """
         if not args:
             entropy = os.urandom(20)
             return cls.from_entropy(entropy)
@@ -73,10 +79,10 @@ class Mnemonic(tuple):
 
     @classmethod
     def from_entropy(cls, ent, wl=WORDLIST_ENGLISH):
-        '''
+        """
         Create a Mnemonic from entropy bytes using given wordlist (default
         English)
-        '''
+        """
 
         ENT = len(ent) * 8
         assert len(ent) % 4 == 0 and len(ent) >= 16 and len(ent) <= 32,\
@@ -90,9 +96,10 @@ class Mnemonic(tuple):
         return cls(wl[x] for x in l)
 
     def check(self, wl=WORDLIST_ENGLISH):
-        '''Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
+        """
+        Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
         instance passes checksum verification.
-        '''
+        """
         if len(self) % 3 > 0:
             return False
         l = [wl.index(x) for x in self]
