@@ -29,11 +29,11 @@ def main():
                         generating a random mnemonic
                         """)
     parser.add_argument('-f', '--format', help='address format', default='BTC',
-                        choices=['BTC', 'LTC'])
+                        choices=['BTC', 'LTC', "BCH"])
     args = parser.parse_args()
 
-    addrpre = {'BTC' : b'\0', 'LTC' : b'0'}
-    wifpre = {'BTC' : b'\x80', 'LTC' : b'\xb0'}
+    addrpre = {'BTC' : b'\0', 'LTC' : b'0', "BCH" : b"\0"}
+    wifpre = {'BTC' : b'\x80', 'LTC' : b'\xb0', "BCH" : b"\x80"}
 
     print('Root key info ' + '-' * 97)
 
@@ -72,7 +72,8 @@ def main():
     print(f"\nLeaves{'':-<{ll + (82 if args.wif else 96)}}")
     for i in args.l:
         xkey = mend.ckd(i)
-        addr = xkey.addr(addrpre[args.format])
+        addr = (xkey.addr(addrpre[args.format]) if args.format != "BCH"
+                else xkey.cashaddr())
         keydat = (xkey.wif(wifpre[args.format]) if args.wif
                   else bytes(xkey.pubkey).hex().upper())
         print(f"{i:{ll}d} {addr:<34} {keydat}")
