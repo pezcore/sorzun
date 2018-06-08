@@ -1,25 +1,28 @@
+"Module for generating, checking, and interpreting BIP39 mnemonics"
+
 import hashlib
 import os
 from util import convertbits
 
-wlfile = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                           'english.txt'), 'r')
-wltxt = wlfile.read()
-
 class WordList(tuple):
-    '''A tuple word list with a compact repr. Useable as a full language
-    word-list tuple but doesn\' spam the screen when printed in documentation
-    '''
+    """
+    A tuple word list with a compact repr. Useable as a full language word-list
+    tuple but doesn\' spam the screen when printed in documentation. This must
+    be loaded from a text file.
+    """
 
-    def __new__(cls, tpl, lang):
+    def __new__(cls, fn):
+        fullpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), fn)
+        with open(fullpath, "r") as fd:
+            tpl = fd.read().split()
         self = super().__new__(cls, tpl)
-        self.lang = lang
+        self.filename = fn
         return self
 
     def __repr__(self):
-        return '<%s word list>' % self.lang
+        return '<%s word list>' % self.filename
 
-wordlist_english = WordList(wltxt.split('\n'), 'English')
+WORDLIST_ENGLISH = WordList('english.txt')
 
 class Mnemonic(tuple):
     '''A BIP39 Mnemonic: a tuple of 3N spoken-language words for carrying seed
@@ -59,7 +62,7 @@ class Mnemonic(tuple):
                                    salt=b'mnemonic' + password,
                                    iterations=2048)
 
-    def _bin_string(self, wl=wordlist_english):
+    def _bin_string(self, wl=WORDLIST_ENGLISH):
         'return str of binary representation'
         return ''.join(bin(wl.index(x))[2:].zfill(11) for x in self)
 
@@ -69,7 +72,7 @@ class Mnemonic(tuple):
         return cls(string.split(' '))
 
     @classmethod
-    def from_entropy(cls, ent, wl=wordlist_english):
+    def from_entropy(cls, ent, wl=WORDLIST_ENGLISH):
         '''
         Create a Mnemonic from entropy bytes using given wordlist (default
         English)
@@ -86,7 +89,7 @@ class Mnemonic(tuple):
         l = convertbits(full, 1, 11)
         return cls(wl[x] for x in l)
 
-    def check(self, wl=wordlist_english):
+    def check(self, wl=WORDLIST_ENGLISH):
         '''Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
         instance passes checksum verification.
         '''
