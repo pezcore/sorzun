@@ -68,8 +68,10 @@ def main():
     else:
         mend = r
 
-    ll = math.ceil(math.log10(args.l.stop))
-    print(f"\nLeaves{'':-<{ll + (82 if args.wif else 96)}}")
+    ll = math.ceil(math.log10(args.l.stop))     # index text width
+    al = 34 if args.format != "BCH" else 54     # address text width
+    kl = 52 if args.wif else 66                 # key text width
+    print(f"\n{'leaves':-<{ll + al + kl + 2}}")
     for i in args.l:
         xkey = mend.ckd(i)
         addr = (xkey.addr(addrpre[args.format]) if args.format != "BCH"
