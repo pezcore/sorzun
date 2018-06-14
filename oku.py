@@ -29,11 +29,12 @@ def main():
                         generating a random mnemonic
                         """)
     parser.add_argument('-f', '--format', help='address format', default='BTC',
-                        choices=['BTC', 'LTC'])
+                        choices=['BTC', 'LTC', "BCH"])
+    parser.add_argument("--long-bch-format", action="store_true")
     args = parser.parse_args()
 
-    addrpre = {'BTC' : b'\0', 'LTC' : b'0'}
-    wifpre = {'BTC' : b'\x80', 'LTC' : b'\xb0'}
+    addrpre = {'BTC' : b'\0', 'LTC' : b'0', "BCH" : b"\0"}
+    wifpre = {'BTC' : b'\x80', 'LTC' : b'\xb0', "BCH" : b"\x80"}
 
     print('Root key info ' + '-' * 97)
 
@@ -68,11 +69,22 @@ def main():
     else:
         mend = r
 
-    ll = math.ceil(math.log10(args.l.stop))
-    print(f"\nLeaves{'':-<{ll + (82 if args.wif else 96)}}")
+    ll = math.ceil(math.log10(args.l.stop))     # index text width
+    al = 34 if args.format != "BCH" else 42     # address text width
+    kl = 52 if args.wif else 66                 # key text width
+    # cashaddr abbreveation adjustment.
+    ab = 12 if (args.long_bch_format and args.format == "BCH") else 0
+    print(f"\n{'leaves':-<{ll + al + kl + ab + 2}}")
     for i in args.l:
         xkey = mend.ckd(i)
-        addr = xkey.addr(addrpre[args.format])
+
+        if args.format != "BCH":
+            addr = xkey.addr(addrpre[args.format])
+        elif args.long_bch_format:
+            addr = xkey.cashaddr()
+        else:
+            addr = xkey.cashaddr()[12:]
+
         keydat = (xkey.wif(wifpre[args.format]) if args.wif
                   else bytes(xkey.pubkey).hex().upper())
         print(f"{i:{ll}d} {addr:<34} {keydat}")
