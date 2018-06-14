@@ -30,6 +30,7 @@ def main():
                         """)
     parser.add_argument('-f', '--format', help='address format', default='BTC',
                         choices=['BTC', 'LTC', "BCH"])
+    parser.add_argument("--long-bch-format", action="store_true")
     args = parser.parse_args()
 
     addrpre = {'BTC' : b'\0', 'LTC' : b'0', "BCH" : b"\0"}
@@ -69,13 +70,21 @@ def main():
         mend = r
 
     ll = math.ceil(math.log10(args.l.stop))     # index text width
-    al = 34 if args.format != "BCH" else 54     # address text width
+    al = 34 if args.format != "BCH" else 42     # address text width
     kl = 52 if args.wif else 66                 # key text width
-    print(f"\n{'leaves':-<{ll + al + kl + 2}}")
+    # cashaddr abbreveation adjustment.
+    ab = 12 if (args.long_bch_format and args.format == "BCH") else 0
+    print(f"\n{'leaves':-<{ll + al + kl + ab + 2}}")
     for i in args.l:
         xkey = mend.ckd(i)
-        addr = (xkey.addr(addrpre[args.format]) if args.format != "BCH"
-                else xkey.cashaddr())
+
+        if args.format != "BCH":
+            addr = xkey.addr(addrpre[args.format])
+        elif args.long_bch_format:
+            addr = xkey.cashaddr()
+        else:
+            addr = xkey.cashaddr()[12:]
+
         keydat = (xkey.wif(wifpre[args.format]) if args.wif
                   else bytes(xkey.pubkey).hex().upper())
         print(f"{i:{ll}d} {addr:<34} {keydat}")
