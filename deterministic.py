@@ -230,7 +230,7 @@ class PubBIP32Node(XPubKey):
         fingr = self.parent_fingerprint.hex().upper()
         cc = self._chaincode.hex().upper()
         keydat = super().__bytes__().hex().upper()
-        return (f"depth    : {self.depth:d}\nindex    : {self.index:d}\n"
+        return (f"depth    : {self.depth:d}\nindex    : {self.index:08X}\n"
                 f"parent   : {fingr}\nchaincode: {cc}\nkeydata  : {keydat}\n"
                 f"BIP32 str: {self.bip32_str()}")
 
