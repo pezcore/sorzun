@@ -1,16 +1,11 @@
-#!/usr/bin/env python
+"""
+base58 codec module
 
-#pylint:disable=invalid-name
-
-''' base58 codec module
 This module implements the base58 and base58check codecs used in bitcoin and
 similar cryptocurrency systems. This module provides 2 functions which
 implement base58 encoding and decoding, each with optional capability to use
 checksums.
-
-This module is also runnable as a command line script to provide general
-purpose command line use.
-'''
+"""
 
 import math
 from hashlib import sha256
@@ -54,7 +49,7 @@ def b58dec(s, check=False):
         assert digest[:4] == cs, 'Checksum Failed'
     return pl
 
-if __name__ == '__main__':
+def main():
     import argparse
     import sys
 
