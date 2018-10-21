@@ -2,7 +2,7 @@
 
 import hashlib
 import os
-from util import convertbits
+from .util import convertbits
 
 class WordList(tuple):
     """

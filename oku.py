@@ -1,7 +1,7 @@
 import argparse
 import math
-from deterministic import node_from_str, PrivBIP32Node
-from mnemonic import Mnemonic
+from .deterministic import node_from_str, PrivBIP32Node
+from .mnemonic import Mnemonic
 
 def range_from_str(s):
     'return a arange from a string in x-y format'

@@ -6,9 +6,9 @@ BIP32
 
 import hashlib
 import hmac
-from ecc import Point, G, N
-from base58 import b58enc, b58dec
-from cashaddr import cashenc
+from .ecc import Point, G, N
+from .base58 import b58enc, b58dec
+from .cashaddr import cashenc
 
 def hash160(msg):
     """

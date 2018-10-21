@@ -1,4 +1,4 @@
-from util import convertbits
+from .util import convertbits
 
 ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
 GEN = [0x98F2BC8E61, 0x79B76D99E2, 0xF33E5FB3C4, 0xAE2EABE2A8, 0x1E4F43E470]

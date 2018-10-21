@@ -1,8 +1,8 @@
 "Convert bitcoin addresses between legacy and cashaddr format"
 
 import argparse
-from cashaddr import cashenc, cashdec, is_cashaddr
-from base58 import b58enc, b58dec
+from .cashaddr import cashenc, cashdec, is_cashaddr
+from .base58 import b58enc, b58dec
 
 def main():
     parser = argparse.ArgumentParser()
