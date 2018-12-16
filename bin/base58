@@ -1,4 +1,4 @@
-#!/opt/anaconda3/bin/python
+#! env python
 
 # -*- coding: utf-8 -*-
 import re
