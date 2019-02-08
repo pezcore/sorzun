@@ -2,6 +2,9 @@ from .util import convertbits
 
 ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
 GEN = [0x98F2BC8E61, 0x79B76D99E2, 0xF33E5FB3C4, 0xAE2EABE2A8, 0x1E4F43E470]
+SIZE_CODE = {
+    160 : 0, 192 : 1, 224 : 2, 256 : 3, 320 : 4, 384 : 5, 448 : 6, 512 : 7
+}
 
 def polymod(data):
     "Find the polymod of input byte stream over GF(2^5)"
