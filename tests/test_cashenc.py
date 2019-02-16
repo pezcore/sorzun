@@ -3,13 +3,13 @@ Test module for testing cashaddr codec. requires pytest
 """
 
 # pylint: disable=invalid-name
-from .cashaddr import cashenc, cashdec, SIZE_CODE
-from .cashaddrconv import convert_word
+from ..cashaddr import cashenc, cashdec, SIZE_CODE
+from ..cashaddrconv import convert_word
 
 #=========================== Load Test Vectors ===============================#
 
 # loaded from testvec file
-with open("cashaddr_testvec.txt", "r") as fd:
+with open("vectors/cashaddr_testvec.txt", "r") as fd:
     sp = (l.split() for l in fd)
     test_vec = {x[2] : (int(x[1]), x[3]) for x in sp}
 
