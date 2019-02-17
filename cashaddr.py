@@ -51,7 +51,13 @@ def cashenc(pl, prefix="bitcoincash"):
 def cashdec(s):
     "Decode cashaddr encoded string to bytes"
     prefix, pltxt = s.split(":")
-    pl32 = bytes(b32decode(pltxt))
+    dec = b32decode(pltxt)
+    if -1 in dec:
+        badloc = dec.index(-1)
+        raise ValueError(
+            f"invalid base32 symbol '{pltxt[badloc]}' at position {badloc}"
+        )
+    pl32 = bytes(dec)
     assert verify_checksum(prefix, pl32), "Bad checksum"
     return bytes(convertbits(pl32[:-8], 5, 8, False))
 

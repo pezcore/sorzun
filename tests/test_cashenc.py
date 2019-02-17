@@ -2,6 +2,8 @@
 Test module for testing cashaddr codec. requires pytest
 """
 
+import pytest
+
 # pylint: disable=invalid-name
 from ..cashaddr import cashenc, cashdec, SIZE_CODE
 from ..cashaddrconv import convert_word
@@ -62,3 +64,17 @@ def test_convert_word_to_leg():
     for leg, cash in legacy_pairs:
         *_, legtest, _ = convert_word(cash)
         assert legtest == leg
+
+def test_bad_char():
+    """
+    Test that the correct ValueError is raised when attempting to decode a
+    cashaddr string containing a character not present in the base32 alphabet.
+    The raised exception must accurately specify both the value of the bad
+    character and its position in the cashaddr string.
+    """
+    estr = "invalid base32 symbol 'i' at position 2"
+    with pytest.raises(ValueError, match=estr):
+        cashdec("bitcoincash:thisismyaddressstring")
+    estr = "invalid base32 symbol 'b' at position 19"
+    with pytest.raises(ValueError, match=estr):
+        cashdec("bitcoincash:qz42g6m8d4p7u6zkvxgbf5583h4rz8dlsypzjp7zd0")
