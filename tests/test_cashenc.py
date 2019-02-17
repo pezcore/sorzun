@@ -49,18 +49,34 @@ def test_cashdec():
         assert SIZE_CODE[len(pl) * 8] == 7 & vb
         assert (0xF8 & vb) >> 3 == typeno
 
-def test_checksum_enc():
+def test_checksum():
+    """
+    Test that cashdec() successfully decodes cashaddr strings with known
+    correct checksums, and that cashdec() raises a bad checksum error for
+    strngs with known bad checksums. The string with known good checksums are
+    provided by upstream spec
+    """
     cashdec("prefix:x64nx6hz")
     cashdec("p:gpf8m4h7")
     cashdec("bitcoincash:qpzry9x8gf2tvdw0s3jn54khce6mua7lcw20ayyn")
     cashdec("bchreg:555555555555555555555555555555555555555555555udxmlmrz")
+    with pytest.raises(AssertionError, match="Bad checksum"):
+        cashdec("bchreg:555555555555555555555555555555555555555555555udxmlmrr")
 
 def test_convert_word_to_cash():
+    """
+    Test that cashaddr addresses are properly converted to legacy addresses via
+    convert_word()
+    """
     for leg, cash in legacy_pairs:
         *_, cashtest = convert_word(leg)
         assert cashtest == cash
 
 def test_convert_word_to_leg():
+    """
+    Test that legacy addresses are properly converted to cashaddr via
+    convert_word()
+    """
     for leg, cash in legacy_pairs:
         *_, legtest, _ = convert_word(cash)
         assert legtest == leg
