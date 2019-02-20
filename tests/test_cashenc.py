@@ -15,20 +15,22 @@ with open("vectors/cashaddr_testvec.txt", "r") as fd:
     sp = (l.split() for l in fd)
     test_vec = {x[2] : (int(x[1]), x[3]) for x in sp}
 
-legacy_pairs = [
-    ("1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu",
-     "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a"),
-    ("1KXrWXciRDZUpQwQmuM1DbwsKDLYAYsVLR",
-     "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy"),
-    ("16w1D5WRVKJuZUsSRzdLp9w3YGcgoxDXb",
-     "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r"),
-    ("3CWFddi6m4ndiGyKqzYvsFYagqDLPVMTzC",
-     "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq"),
-    ("3LDsS579y7sruadqu11beEJoTjdFiFCdX4",
-     "bitcoincash:pr95sy3j9xwd2ap32xkykttr4cvcu7as4yc93ky28e"),
-    ("31nwvkZwyPdgzjBJZXfDmSWsC4ZLKpYyUw",
-     "bitcoincash:pqq3728yw0y47sqn6l2na30mcw6zm78dzq5ucqzc37")
-]
+@pytest.fixture(scope="module")
+def legacy_pairs():
+    return [
+        ("1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu",
+         "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a"),
+        ("1KXrWXciRDZUpQwQmuM1DbwsKDLYAYsVLR",
+         "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy"),
+        ("16w1D5WRVKJuZUsSRzdLp9w3YGcgoxDXb",
+         "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r"),
+        ("3CWFddi6m4ndiGyKqzYvsFYagqDLPVMTzC",
+         "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq"),
+        ("3LDsS579y7sruadqu11beEJoTjdFiFCdX4",
+         "bitcoincash:pr95sy3j9xwd2ap32xkykttr4cvcu7as4yc93ky28e"),
+        ("31nwvkZwyPdgzjBJZXfDmSWsC4ZLKpYyUw",
+         "bitcoincash:pqq3728yw0y47sqn6l2na30mcw6zm78dzq5ucqzc37")
+    ]
 
 #============================= TEST FUNCTIONS ================================#
 
@@ -63,7 +65,7 @@ def test_checksum():
     with pytest.raises(AssertionError, match="Bad checksum"):
         cashdec("bchreg:555555555555555555555555555555555555555555555udxmlmrr")
 
-def test_convert_word_to_cash():
+def test_convert_word_to_cash(legacy_pairs):
     """
     Test that cashaddr addresses are properly converted to legacy addresses via
     convert_word()
@@ -72,7 +74,7 @@ def test_convert_word_to_cash():
         *_, cashtest = convert_word(leg)
         assert cashtest == cash
 
-def test_convert_word_to_leg():
+def test_convert_word_to_leg(legacy_pairs):
     """
     Test that legacy addresses are properly converted to cashaddr via
     convert_word()
