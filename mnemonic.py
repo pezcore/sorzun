@@ -27,6 +27,7 @@ class WordList(tuple):
         return '<%s word list>' % self.filename
 
 WORDLIST_ENGLISH = WordList('english.txt')
+WORDLIST_JAPANESE = WordList('japanese.txt')
 
 class Mnemonic(tuple):
     """
