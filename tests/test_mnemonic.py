@@ -42,15 +42,6 @@ def test_from_string(trezorvec):
 def test_default():
     m = Mnemonic()
 
-def test_from_entropy():
-    m = Mnemonic.from_entropy(bytes.fromhex("f49fccd1abc419181c1206d1005c4ae0"))
-    assert m == tuple("virus wrist crucial fiscal dose metal icon dolphin "
-                      "speed actual bargain scrub".split())
-    assert m.to_seed().hex() == (
-        "e260dbc427ce11fed7913e5c7d68e317aa3f5db7ab20c8a14bde1c3c8b9da3b2"
-        "71f7d2e90dedac9aadd645082c2d06b2619d742463e0f4140eb201a71efa325d"
-    )
-
 def test_consume():
     """
     Test that all words in the wordlist appear at least once in set of 3000
