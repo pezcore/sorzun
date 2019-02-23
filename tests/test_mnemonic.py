@@ -5,6 +5,7 @@ from unicodedata import normalize
 import pytest
 
 from ..mnemonic import Mnemonic, WORDLIST_JAPANESE
+from .. import mnemonic
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -50,6 +51,23 @@ def test_from_entropy():
         "71f7d2e90dedac9aadd645082c2d06b2619d742463e0f4140eb201a71efa325d"
     )
 
+def test_consume():
+    """
+    Test that all words in the wordlist appear at least once in set of 3000
+    uniformly distributed random mnemonics. Only as many mnemonics as
+    necessary to confirm are actually generated.
+    """
+    # o look a python algorithm! :O
+    seen = set()
+    wl = frozenset(mnemonic.WORDLIST_ENGLISH)
+    i = 0
+    while seen != wl:
+        ent = os.urandom(20)
+        m = Mnemonic.from_entropy(ent)
+        seen |= set(m)
+        i += 1
+    if i > 3000:
+        assert False, "Wordlist consumption timeout"
 
 def test_japaneese_vectors(japvecs):
     for tv in japvecs:
