@@ -2,6 +2,7 @@
 Test module for testing cashaddr codec. requires pytest
 """
 import os.path
+import json
 
 import pytest
 
@@ -14,9 +15,8 @@ from ..cashaddrconv import convert_word
 test_dir = os.path.dirname(os.path.realpath(__file__))
 
 # loaded from testvec file
-with open(os.path.join(test_dir, "vectors", "cashaddr_testvec.txt"), "r") as fd:
-    sp = (l.split() for l in fd)
-    test_vec = {x[2] : (int(x[1]), x[3]) for x in sp}
+with open(os.path.join(test_dir, "vectors", "cashaddr.json"), "r") as fd:
+    test_vec = json.load(fd)
 
 @pytest.fixture(scope="module")
 def legacy_pairs():
@@ -38,21 +38,21 @@ def legacy_pairs():
 #============================= TEST FUNCTIONS ================================#
 
 def test_cashenc():
-    for cashstr, (typeno, hexstr) in test_vec.items():
-        prefix, _ = cashstr.split(":")
-        pl = bytes.fromhex(hexstr)
-        vb = ((typeno << 3) | SIZE_CODE[len(pl) * 8]).to_bytes(1, "big")
+    for tv in test_vec:
+        prefix, _ = tv["cashaddr"].split(":")
+        pl = bytes.fromhex(tv["payload"])
+        vb = ((tv["type"] << 3) | SIZE_CODE[len(pl) * 8]).to_bytes(1, "big")
         test = cashenc(vb + pl, prefix)
-        assert (0xF8 & vb[0]) >> 3 == typeno
-        assert cashstr == test
+        assert (0xF8 & vb[0]) >> 3 == tv["type"]
+        assert tv["cashaddr"] == test
 
 def test_cashdec():
-    for cashstr, (typeno, hexstr) in test_vec.items():
-        rawpl = cashdec(cashstr)
+    for tv in test_vec:
+        rawpl = cashdec(tv["cashaddr"])
         vb, pl = rawpl[0], rawpl[1:]
-        assert pl == bytes.fromhex(hexstr)
+        assert pl == bytes.fromhex(tv["payload"])
         assert SIZE_CODE[len(pl) * 8] == 7 & vb
-        assert (0xF8 & vb) >> 3 == typeno
+        assert (0xF8 & vb) >> 3 == tv["type"]
 
 def test_checksum():
     """
