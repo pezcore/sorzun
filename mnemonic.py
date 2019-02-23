@@ -2,6 +2,8 @@
 
 import hashlib
 import os
+from unicodedata import normalize
+
 from .util import convertbits
 
 class WordList(tuple):
@@ -76,7 +78,7 @@ class Mnemonic(tuple):
     @classmethod
     def from_string(cls, string):
         'Create Mnemonic from space delimited string'
-        return cls(string.split(' '))
+        return cls(normalize("NFKD", string).split())
 
     @classmethod
     def from_entropy(cls, ent, wl=WORDLIST_ENGLISH):
