@@ -38,6 +38,11 @@ def legacy_pairs():
 #============================= TEST FUNCTIONS ================================#
 
 def test_cashenc():
+    """
+    Test that cashenc() properly encodes binary payloads of all supported sizes
+    into cashaddr strings. Checks against test vectors at
+    https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md
+    """
     for tv in test_vec:
         prefix, _ = tv["cashaddr"].split(":")
         pl = bytes.fromhex(tv["payload"])
@@ -47,6 +52,11 @@ def test_cashenc():
         assert tv["cashaddr"] == test
 
 def test_cashdec():
+    """
+    Test that cashdec() properly decodes cashaddr strings of all supported
+    sizes. Checks payload, length code, and type code against test vectors from
+    https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md
+    """
     for tv in test_vec:
         rawpl = cashdec(tv["cashaddr"])
         vb, pl = rawpl[0], rawpl[1:]
@@ -58,8 +68,8 @@ def test_checksum():
     """
     Test that cashdec() successfully decodes cashaddr strings with known
     correct checksums, and that cashdec() raises a bad checksum error for
-    strngs with known bad checksums. The string with known good checksums are
-    provided by upstream spec
+    strings with known bad checksums. The strings with known good checksums are
+    provided by upstream spec.
     """
     cashdec("prefix:x64nx6hz")
     cashdec("p:gpf8m4h7")
