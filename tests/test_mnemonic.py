@@ -20,20 +20,23 @@ def japvecs():
     with open(fn, "r") as fd:
         return json.load(fd)
 
+def test_from_entropy(trezorvec):
+    for entstr, mstr, seedstr, _ in trezorvec:
+        m = Mnemonic.from_entropy(bytes.fromhex(entstr))
+        assert m == tuple(mstr.split())
+        assert m.to_seed(b"TREZOR").hex() == seedstr
 
-def test_construction():
-    m = Mnemonic("become keen dog whip federal dice column cat fly".split())
-    assert m.to_seed().hex() == (
-        "e78890ff55949e0d93d62b96aedb2bcce87c2f44bbbe6ff0f6646fb6eaf7644e"
-        "09b87ba81504d37d32089d131502b6a68f4f3541f545317ac69476894abc6b61"
-    )
+def test_construction(trezorvec):
+    for entstr, mstr, seedstr, _ in trezorvec:
+        m = Mnemonic(mstr.split())
+        assert m == tuple(mstr.split())
+        assert m.to_seed(b"TREZOR").hex() == seedstr
 
-def test_from_string():
-    m = Mnemonic.from_string("become keen dog whip federal dice column cat fly")
-    assert m.to_seed().hex() == (
-        "e78890ff55949e0d93d62b96aedb2bcce87c2f44bbbe6ff0f6646fb6eaf7644e"
-        "09b87ba81504d37d32089d131502b6a68f4f3541f545317ac69476894abc6b61"
-    )
+def test_from_string(trezorvec):
+    for entstr, mstr, seedstr, _ in trezorvec:
+        m = Mnemonic.from_string(mstr)
+        assert m == tuple(mstr.split())
+        assert m.to_seed(b"TREZOR").hex() == seedstr
 
 def test_default():
     m = Mnemonic()
@@ -47,11 +50,6 @@ def test_from_entropy():
         "71f7d2e90dedac9aadd645082c2d06b2619d742463e0f4140eb201a71efa325d"
     )
 
-def test_trezorvectors(trezorvec):
-    for entstr, mstr, seedstr, _ in trezorvec:
-        m = Mnemonic.from_entropy(bytes.fromhex(entstr))
-        assert m == tuple(mstr.split())
-        assert m.to_seed(b"TREZOR").hex() == seedstr
 
 def test_japaneese_vectors(japvecs):
     for tv in japvecs:
