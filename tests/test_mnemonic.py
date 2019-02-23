@@ -1,7 +1,9 @@
-from ..mnemonic import Mnemonic
-from .. import mnemonic
 import json
+from unicodedata import normalize
+
 import pytest
+
+from ..mnemonic import Mnemonic, WORDLIST_JAPANESE
 
 @pytest.fixture(scope="module")
 def trezorvec():
@@ -47,7 +49,10 @@ def test_trezorvectors(trezorvec):
         assert m.to_seed(b"TREZOR").hex() == seedstr
 
 def test_japaneese_vectors(japvecs):
-    wl = mnemonic.WORDLIST_JAPANESE
     for tv in japvecs:
-        m = Mnemonic.from_entropy(bytes.fromhex(tv["entropy"]), wl)
-        assert m == tuple(tv["mnemonic"].split())
+        ent = bytes.fromhex(tv["entropy"])
+        passwd = normalize("NFKD", tv["passphrase"])
+        expected_seed = bytes.fromhex(tv["seed"])
+        m = Mnemonic.from_entropy(ent, WORDLIST_JAPANESE)
+        assert m == tuple(normalize("NFKD", x) for x in tv["mnemonic"].split())
+        assert m.to_seed(passwd.encode("utf8")) == expected_seed
