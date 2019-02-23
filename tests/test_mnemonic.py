@@ -1,3 +1,4 @@
+import os.path
 import json
 from unicodedata import normalize
 
@@ -5,14 +6,18 @@ import pytest
 
 from ..mnemonic import Mnemonic, WORDLIST_JAPANESE
 
+test_dir = os.path.dirname(os.path.realpath(__file__))
+
 @pytest.fixture(scope="module")
 def trezorvec():
-    with open("vectors/trezor_bip32.json", "r") as fd:
+    fn = os.path.join(test_dir, "vectors", "trezor_bip32.json")
+    with open(fn, "r") as fd:
         return json.load(fd)["english"]
 
 @pytest.fixture(scope="module")
 def japvecs():
-    with open("vectors/japaneese_bip32.json", "r") as fd:
+    fn = os.path.join(test_dir, "vectors", "japaneese_bip32.json")
+    with open(fn, "r") as fd:
         return json.load(fd)
 
 
