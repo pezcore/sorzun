@@ -62,6 +62,7 @@ def test_cashdec():
         vb, pl = rawpl[0], rawpl[1:]
         assert pl == bytes.fromhex(tv["payload"])
         assert SIZE_CODE[len(pl) * 8] == 7 & vb
+        assert len(pl) == tv["length"]
         assert (0xF8 & vb) >> 3 == tv["type"]
 
 def test_checksum():
