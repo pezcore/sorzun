@@ -9,35 +9,50 @@ from .. import mnemonic
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
 
-@pytest.fixture(scope="module")
-def trezorvec():
-    fn = os.path.join(test_dir, "vectors", "trezor_bip32.json")
-    with open(fn, "r") as fd:
-        return json.load(fd)["english"]
+@pytest.fixture(scope="module",
+    params=[(mnemonic.WORDLIST_ENGLISH, "trezor_bip32.json"),
+            (mnemonic.WORDLIST_JAPANESE, "japaneese_bip32.json")],
+    ids=["english", "japanese"])
+def testvec(request):
+    wl, fn = request.param
+    ffn = os.path.join(test_dir, "vectors", fn)
+    with open(ffn, "r") as fd:
+        d = json.load(fd)
+    # convert test vectors dict into common format for test functions
+    if wl is mnemonic.WORDLIST_ENGLISH:
+        return wl, [{
+            "entropy" : ent,
+            "mnemonic": mne,
+            "passphrase" : "TREZOR",
+            "seed" : seed}
+                for ent, mne, seed, _ in d["english"]
+            ]
+    if wl is mnemonic.WORDLIST_JAPANESE:
+        return wl, d
 
-@pytest.fixture(scope="module")
-def japvecs():
-    fn = os.path.join(test_dir, "vectors", "japaneese_bip32.json")
-    with open(fn, "r") as fd:
-        return json.load(fd)
+def test_from_entropy(testvec):
+    wl, tvl = testvec
+    for tv in tvl:
+        m = Mnemonic.from_entropy(bytes.fromhex(tv["entropy"]), wl)
+        assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
+        passwd = normalize("NFKD", tv["passphrase"]).encode("utf8")
+        assert m.to_seed(passwd).hex() == tv["seed"]
 
-def test_from_entropy(trezorvec):
-    for entstr, mstr, seedstr, _ in trezorvec:
-        m = Mnemonic.from_entropy(bytes.fromhex(entstr))
-        assert m == tuple(mstr.split())
-        assert m.to_seed(b"TREZOR").hex() == seedstr
+def test_construction(testvec):
+    wl, tvl = testvec
+    for tv in tvl:
+        m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split())
+        assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
+        passwd = normalize("NFKD", tv["passphrase"]).encode("utf8")
+        assert m.to_seed(passwd).hex() == tv["seed"]
 
-def test_construction(trezorvec):
-    for entstr, mstr, seedstr, _ in trezorvec:
-        m = Mnemonic(mstr.split())
-        assert m == tuple(mstr.split())
-        assert m.to_seed(b"TREZOR").hex() == seedstr
-
-def test_from_string(trezorvec):
-    for entstr, mstr, seedstr, _ in trezorvec:
-        m = Mnemonic.from_string(mstr)
-        assert m == tuple(mstr.split())
-        assert m.to_seed(b"TREZOR").hex() == seedstr
+def test_from_string(testvec):
+    wl, tvl = testvec
+    for tv in tvl:
+        m = Mnemonic.from_string(tv["mnemonic"])
+        assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
+        passwd = normalize("NFKD", tv["passphrase"]).encode("utf8")
+        assert m.to_seed(passwd).hex() == tv["seed"]
 
 def test_default():
     m = Mnemonic()
@@ -59,12 +74,3 @@ def test_consume():
         i += 1
     if i > 3000:
         assert False, "Wordlist consumption timeout"
-
-def test_japaneese_vectors(japvecs):
-    for tv in japvecs:
-        ent = bytes.fromhex(tv["entropy"])
-        passwd = normalize("NFKD", tv["passphrase"])
-        expected_seed = bytes.fromhex(tv["seed"])
-        m = Mnemonic.from_entropy(ent, WORDLIST_JAPANESE)
-        assert m == tuple(normalize("NFKD", x) for x in tv["mnemonic"].split())
-        assert m.to_seed(passwd.encode("utf8")) == expected_seed
