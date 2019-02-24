@@ -1,6 +1,7 @@
 import os.path
 import json
 from unicodedata import normalize
+import math
 
 import pytest
 
@@ -20,29 +21,38 @@ def testvec(request):
     passphrase = normalize("NFKD", d["passphrase"]).encode("utf8")
     return WORDLISTS[lang], passphrase, d["vectors"]
 
-def test_from_entropy(testvec):
+def test_entropy_constructor(testvec):
     wl, passphrase, vectors = testvec
     for tv in vectors:
-        m = Mnemonic.from_entropy(bytes.fromhex(tv["entropy"]), wl)
+        m = Mnemonic(bytes.fromhex(tv["entropy"]), wl)
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
-def test_construction(testvec):
+def test_iter_constructor(testvec):
     _, passphrase, vectors = testvec
     for tv in vectors:
         m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split())
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
-def test_from_string(testvec):
+def test_string_constructor(testvec):
     _, passphrase, vectors = testvec
     for tv in vectors:
-        m = Mnemonic.from_string(tv["mnemonic"])
+        m = Mnemonic(tv["mnemonic"])
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
-def test_default():
+def test_default_constuctor():
     m = Mnemonic()
+    assert all(x in m.wordlist for x in m)
+    assert len(m) == 15
+
+def test_int_constructor():
+    for n in range(16, 30, 4):
+        m = Mnemonic(n)
+        assert all(x in m.wordlist for x in m)
+        assert len(m) == math.ceil(n * 8 / 11)
+
 
 def test_consume():
     """
