@@ -10,49 +10,37 @@ from .. import mnemonic
 test_dir = os.path.dirname(os.path.realpath(__file__))
 
 @pytest.fixture(scope="module",
-    params=[(mnemonic.WORDLIST_ENGLISH, "trezor_bip32.json"),
-            (mnemonic.WORDLIST_JAPANESE, "japaneese_bip32.json")],
+    params=[(mnemonic.WORDLIST_ENGLISH, "test_EN_BIP39.json"),
+            (mnemonic.WORDLIST_JAPANESE, "test_JP_BIP39.json")],
     ids=["english", "japanese"])
 def testvec(request):
     wl, fn = request.param
     ffn = os.path.join(test_dir, "vectors", fn)
     with open(ffn, "r") as fd:
         d = json.load(fd)
-    # convert test vectors dict into common format for test functions
-    if wl is mnemonic.WORDLIST_ENGLISH:
-        return wl, [{
-            "entropy" : ent,
-            "mnemonic": mne,
-            "passphrase" : "TREZOR",
-            "seed" : seed}
-                for ent, mne, seed, _ in d["english"]
-            ]
-    if wl is mnemonic.WORDLIST_JAPANESE:
-        return wl, d
+    passphrase = normalize("NFKD", d["passphrase"]).encode("utf8")
+    return wl, passphrase, d["vectors"]
 
 def test_from_entropy(testvec):
-    wl, tvl = testvec
-    for tv in tvl:
+    wl, passphrase, vectors = testvec
+    for tv in vectors:
         m = Mnemonic.from_entropy(bytes.fromhex(tv["entropy"]), wl)
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
-        passwd = normalize("NFKD", tv["passphrase"]).encode("utf8")
-        assert m.to_seed(passwd).hex() == tv["seed"]
+        assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_construction(testvec):
-    wl, tvl = testvec
-    for tv in tvl:
+    wl, passphrase, vectors = testvec
+    for tv in vectors:
         m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split())
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
-        passwd = normalize("NFKD", tv["passphrase"]).encode("utf8")
-        assert m.to_seed(passwd).hex() == tv["seed"]
+        assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_from_string(testvec):
-    wl, tvl = testvec
-    for tv in tvl:
+    wl, passphrase, vectors = testvec
+    for tv in vectors:
         m = Mnemonic.from_string(tv["mnemonic"])
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
-        passwd = normalize("NFKD", tv["passphrase"]).encode("utf8")
-        assert m.to_seed(passwd).hex() == tv["seed"]
+        assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_default():
     m = Mnemonic()
