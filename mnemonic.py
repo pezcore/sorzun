@@ -85,9 +85,9 @@ class Mnemonic(tuple):
                                    salt=b'mnemonic' + password,
                                    iterations=2048)
 
-    def _bin_string(self, wl=WORDLIST_ENGLISH):
+    def _bin_string(self):
         'return str of binary representation'
-        return ''.join(bin(wl.index(x))[2:].zfill(11) for x in self)
+        return ''.join(bin(self.wordlist.index(x))[2:].zfill(11) for x in self)
 
     @classmethod
     def from_string(cls, string, wl=None):
@@ -112,14 +112,14 @@ class Mnemonic(tuple):
         l = convertbits(full, 1, 11)
         return cls(tuple(wl[x] for x in l), wl)
 
-    def check(self, wl=WORDLIST_ENGLISH):
+    def check(self):
         """
         Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
         instance passes checksum verification.
         """
         if len(self) % 3 > 0:
             return False
-        l = [wl.index(x) for x in self]
+        l = [self.wordlist.index(x) for x in self]
         fullbits = convertbits(l, 11, 1)
         ENT = 32 * len(fullbits) // 33
         plbits, csbits = fullbits[:ENT], fullbits[ENT:]
