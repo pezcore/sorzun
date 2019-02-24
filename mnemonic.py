@@ -28,8 +28,9 @@ class WordList(tuple):
     def __repr__(self):
         return '<%s word list>' % self.filename
 
-WORDLIST_ENGLISH = WordList('english.txt')
-WORDLIST_JAPANESE = WordList('japanese.txt')
+LANGS = ["english", "japanese", "french", "italian", "korean", "spanish"]
+WORDLISTS = {lang : WordList(f"wordlists/{lang}.txt") for lang in LANGS}
+WORDLIST_ENGLISH = WORDLISTS["english"]
 
 class Mnemonic(tuple):
     """
