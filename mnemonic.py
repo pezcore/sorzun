@@ -2,6 +2,8 @@
 
 import hashlib
 import os
+from unicodedata import normalize
+
 from .util import convertbits
 
 class WordList(tuple):
@@ -26,7 +28,9 @@ class WordList(tuple):
     def __repr__(self):
         return '<%s word list>' % self.filename
 
-WORDLIST_ENGLISH = WordList('english.txt')
+LANGS = ["english", "japanese", "french", "italian", "korean", "spanish"]
+WORDLISTS = {lang : WordList(f"wordlists/{lang}.txt") for lang in LANGS}
+WORDLIST_ENGLISH = WORDLISTS["english"]
 
 class Mnemonic(tuple):
     """
@@ -41,21 +45,34 @@ class Mnemonic(tuple):
     sources.
     """
 
-    __slots__ = ()
+    def __new__(cls, data=20, wl=WORDLIST_ENGLISH):
+        """
+        Create a new Mnemonic. Flexible interface takes 2 optional args.
 
-    def __new__(cls, *args):
+        Parameters
+        ----------
+        data : flexible:
+            Data to use to initialize the mnemonic.
+            - int:      generate random n byte mnemonic (defalut=20)
+            - btyes:    generate mnemonic using bytes directly as entropy
+                        source
+            - string:   interpret as an already-made space-delimited mnemonic
+                        phrase
+            - iterable: intrepret as iterable of mnemonic words
+        wl : WordList
+            WordList from used for mnemonic.
         """
-        Create A new Mnemonic. If no args are given, randomly generate Mnemonic
-        from system entropy.
-        """
-        if not args:
-            entropy = os.urandom(20)
-            return cls.from_entropy(entropy)
-        else:
-            if isinstance(args[0], int):
-                entropy = os.urandom(args[0])
-                return cls.from_entropy(entropy)
-            return super().__new__(cls, *args)
+        if isinstance(data, int):
+            entropy = os.urandom(data)
+            return cls.from_entropy(entropy, wl)
+        if isinstance(data, bytes):
+            return cls.from_entropy(data, wl)
+        if isinstance(data, str):
+            return cls.from_string(data, wl)
+        return super().__new__(cls, data)
+
+    def __init__(self, data=None, wl=WORDLIST_ENGLISH):
+        self.wordlist = wl
 
     def __str__(self):
         return ' '.join(self)
@@ -68,14 +85,14 @@ class Mnemonic(tuple):
                                    salt=b'mnemonic' + password,
                                    iterations=2048)
 
-    def _bin_string(self, wl=WORDLIST_ENGLISH):
+    def _bin_string(self):
         'return str of binary representation'
-        return ''.join(bin(wl.index(x))[2:].zfill(11) for x in self)
+        return ''.join(bin(self.wordlist.index(x))[2:].zfill(11) for x in self)
 
     @classmethod
-    def from_string(cls, string):
+    def from_string(cls, string, wl=None):
         'Create Mnemonic from space delimited string'
-        return cls(string.split(' '))
+        return cls(normalize("NFKD", string).split(), wl)
 
     @classmethod
     def from_entropy(cls, ent, wl=WORDLIST_ENGLISH):
@@ -93,16 +110,16 @@ class Mnemonic(tuple):
         entbits = convertbits(ent, 8, 1)
         full = entbits + chk
         l = convertbits(full, 1, 11)
-        return cls(wl[x] for x in l)
+        return cls(tuple(wl[x] for x in l), wl)
 
-    def check(self, wl=WORDLIST_ENGLISH):
+    def check(self):
         """
         Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
         instance passes checksum verification.
         """
         if len(self) % 3 > 0:
             return False
-        l = [wl.index(x) for x in self]
+        l = [self.wordlist.index(x) for x in self]
         fullbits = convertbits(l, 11, 1)
         ENT = 32 * len(fullbits) // 33
         plbits, csbits = fullbits[:ENT], fullbits[ENT:]

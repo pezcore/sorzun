@@ -2,6 +2,9 @@ from .util import convertbits
 
 ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
 GEN = [0x98F2BC8E61, 0x79B76D99E2, 0xF33E5FB3C4, 0xAE2EABE2A8, 0x1E4F43E470]
+SIZE_CODE = {
+    160 : 0, 192 : 1, 224 : 2, 256 : 3, 320 : 4, 384 : 5, 448 : 6, 512 : 7
+}
 
 def polymod(data):
     "Find the polymod of input byte stream over GF(2^5)"
@@ -48,7 +51,13 @@ def cashenc(pl, prefix="bitcoincash"):
 def cashdec(s):
     "Decode cashaddr encoded string to bytes"
     prefix, pltxt = s.split(":")
-    pl32 = bytes(b32decode(pltxt))
+    dec = b32decode(pltxt)
+    if -1 in dec:
+        badloc = dec.index(-1)
+        raise ValueError(
+            f"invalid base32 symbol '{pltxt[badloc]}' at position {badloc}"
+        )
+    pl32 = bytes(dec)
     assert verify_checksum(prefix, pl32), "Bad checksum"
     return bytes(convertbits(pl32[:-8], 5, 8, False))
 
