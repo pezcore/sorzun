@@ -73,6 +73,7 @@ class Mnemonic(tuple):
 
     def __init__(self, data=None, wl=WORDLIST_ENGLISH):
         self.wordlist = wl
+        self.check()
 
     def __str__(self):
         return ' '.join(self)
@@ -117,12 +118,15 @@ class Mnemonic(tuple):
         Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
         instance passes checksum verification.
         """
-        if len(self) % 3 > 0:
-            return False
+        if len(self) not in [12, 15, 18, 21, 24]:
+            raise ValueError("Incorrect Mnemonic length. must be 12, 15, 18, "
+                             "21, or 24 words"
+            )
         l = [self.wordlist.index(x) for x in self]
         fullbits = convertbits(l, 11, 1)
         ENT = 32 * len(fullbits) // 33
         plbits, csbits = fullbits[:ENT], fullbits[ENT:]
         plbytes = bytes(convertbits(plbits, 1, 8))
         hash_ = hashlib.sha256(plbytes).digest()
-        return convertbits(hash_, 8, 1)[:len(csbits)] == csbits
+        if not convertbits(hash_, 8, 1)[:len(csbits)] == csbits:
+            raise ValueError("Bad mnemonic checksum")

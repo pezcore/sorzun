@@ -29,16 +29,16 @@ def test_entropy_constructor(testvec):
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_iter_constructor(testvec):
-    _, passphrase, vectors = testvec
+    wl, passphrase, vectors = testvec
     for tv in vectors:
-        m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split())
+        m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split(), wl)
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_string_constructor(testvec):
-    _, passphrase, vectors = testvec
+    wl, passphrase, vectors = testvec
     for tv in vectors:
-        m = Mnemonic(tv["mnemonic"])
+        m = Mnemonic(tv["mnemonic"], wl)
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
