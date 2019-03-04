@@ -71,3 +71,24 @@ def test_consume():
         i += 1
     if i > 3000:
         assert False, "Wordlist consumption timeout"
+
+bad_words = [
+    'alien', 'erosion', 'worth', 'minor', 'unusual', 'strike', 'foster',
+    'sad', 'item', 'teach', 'century', 'transfer', 'valley', 'ridge',
+    'chimney', 'number', 'crazy', 'glass', 'crush', 'canal', 'cloth',
+    'seat', 'inmate', 'moon', 'zone', 'laptop', 'inch', 'lecture',
+    'become', 'dinner'
+]
+
+def test_badlen_fail():
+    l = set(range(1, 30)) - {3 * x for x in range(4, 9)}
+    for ll in l:
+        x = bad_words[:ll]
+        with pytest.raises(ValueError, match="Incorrect Mnemonic"):
+            Mnemonic(x)
+
+def test_checksum_fail():
+    for l in {3 * x for x in range(4, 9)}: # use the correct length
+        x = bad_words[:l]
+        with pytest.raises(ValueError, match="Bad mnemonic checksum"):
+            Mnemonic(x)
