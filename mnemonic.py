@@ -20,10 +20,10 @@ class WordList(tuple):
         """
         fullpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), fn)
         with open(fullpath, "r") as fd:
-            tpl = fd.read().split()
-        self = super().__new__(cls, tpl)
+            return super().__new__(cls, fd.read().split())
+
+    def __init__(self, fn):
         self.filename = fn
-        return self
 
     def __repr__(self):
         return '<%s word list>' % self.filename
