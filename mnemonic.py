@@ -73,7 +73,7 @@ class Mnemonic(tuple):
 
     def __init__(self, data=None, wl=WORDLIST_ENGLISH):
         self.wordlist = wl
-        self.check()
+        self._check()
 
     def __str__(self):
         return ' '.join(self)
@@ -108,7 +108,7 @@ class Mnemonic(tuple):
         l = convertbits(full, 1, 11)
         return cls(tuple(wl[x] for x in l), wl)
 
-    def check(self):
+    def _check(self):
         """
         Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
         instance passes checksum verification.

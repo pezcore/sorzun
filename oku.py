@@ -50,7 +50,6 @@ def main():
         seed = bytes.fromhex(args.keydata)
 
     if 'm' in locals():
-        assert m.check(), 'Not a valid Mnemonnic'
         print(f"Mnemonic : {m}")
         seed = m.to_seed()
 
