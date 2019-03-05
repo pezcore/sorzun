@@ -68,7 +68,7 @@ class Mnemonic(tuple):
         if isinstance(data, bytes):
             return cls.from_entropy(data, wl)
         if isinstance(data, str):
-            return cls.from_string(data, wl)
+            return cls(normalize("NFKD", data).split(), wl)
         return super().__new__(cls, data)
 
     def __init__(self, data=None, wl=WORDLIST_ENGLISH):
@@ -89,11 +89,6 @@ class Mnemonic(tuple):
     def _bin_string(self):
         'return str of binary representation'
         return ''.join(bin(self.wordlist.index(x))[2:].zfill(11) for x in self)
-
-    @classmethod
-    def from_string(cls, string, wl=None):
-        'Create Mnemonic from space delimited string'
-        return cls(normalize("NFKD", string).split(), wl)
 
     @classmethod
     def from_entropy(cls, ent, wl=WORDLIST_ENGLISH):
