@@ -6,7 +6,7 @@ from unicodedata import normalize as _normalize
 
 from .util import convertbits
 
-class WordList(tuple):
+class _WordList(tuple):
     """
     A tuple word list with a compact repr. Useable as a full language word-list
     tuple but doesn't spam the screen when printed in documentation. This must
@@ -26,10 +26,10 @@ class WordList(tuple):
         self.filename = fn
 
     def __repr__(self):
-        return '<%s word list>' % self.filename
+        return self.__class__.__name__ + f"(\"{self.filename}\")"
 
 LANGS = ["english", "japanese", "french", "italian", "korean", "spanish"]
-WORDLISTS = {lang : WordList(f"wordlists/{lang}.txt") for lang in LANGS}
+WORDLISTS = {lang : _WordList(f"wordlists/{lang}.txt") for lang in LANGS}
 
 class Mnemonic(tuple):
     """
