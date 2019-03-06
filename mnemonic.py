@@ -2,7 +2,7 @@
 
 import hashlib
 import os
-from unicodedata import normalize
+from unicodedata import normalize as _normalize
 
 from .util import convertbits
 
@@ -68,7 +68,7 @@ class Mnemonic(tuple):
         if isinstance(data, bytes):
             return cls.from_entropy(data, wl)
         if isinstance(data, str):
-            return cls(normalize("NFKD", data).split(), wl)
+            return cls(_normalize("NFKD", data).split(), wl)
         return super().__new__(cls, data)
 
     def __init__(self, data=None, wl=WORDLIST_ENGLISH):
