@@ -111,13 +111,22 @@ class Mnemonic(tuple):
 
     def _check(self):
         """
-        Check if a Mnemonic instance is valid. Returns true iff the Mnemonic
-        instance passes checksum verification.
+        Check if a Mnemonic instance is valid. Checks checksum and other
+        valididy criteria specified by BIP39. Raises descriptive exceptions on
+        failure.
         """
         if len(self) not in [12, 15, 18, 21, 24]:
             raise ValueError("Incorrect Mnemonic length. must be 12, 15, 18, "
                              "21, or 24 words"
             )
+
+        if not all(x in self.wordlist for x in self):
+            baditems = frozenset(self) - frozenset(self.wordlist)
+            raise ValueError(
+                "Bad word(s): the following words are not "
+                "present in the wordlist: " f"{list(baditems)}"
+            )
+
         l = [self.wordlist.index(x) for x in self]
         fullbits = convertbits(l, 11, 1)
         ENT = 32 * len(fullbits) // 33
