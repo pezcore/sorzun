@@ -30,7 +30,6 @@ class WordList(tuple):
 
 LANGS = ["english", "japanese", "french", "italian", "korean", "spanish"]
 WORDLISTS = {lang : WordList(f"wordlists/{lang}.txt") for lang in LANGS}
-WORDLIST_ENGLISH = WORDLISTS["english"]
 
 class Mnemonic(tuple):
     """
@@ -45,7 +44,7 @@ class Mnemonic(tuple):
     sources.
     """
 
-    def __new__(cls, data=20, wl=WORDLIST_ENGLISH):
+    def __new__(cls, data=20, lang="english"):
         """
         Create a new Mnemonic. Flexible interface takes 2 optional args.
 
@@ -59,20 +58,21 @@ class Mnemonic(tuple):
             - string:   interpret as an already-made space-delimited mnemonic
                         phrase
             - iterable: intrepret as iterable of mnemonic words
-        wl : WordList
-            WordList from used for mnemonic.
+        lang : str
+            language to use for wordlist
         """
         if isinstance(data, int):
             entropy = os.urandom(data)
-            return cls.from_entropy(entropy, wl)
+            return cls._from_entropy(entropy, lang)
         if isinstance(data, bytes):
-            return cls.from_entropy(data, wl)
+            return cls._from_entropy(data, lang)
         if isinstance(data, str):
-            return cls(_normalize("NFKD", data).split(), wl)
+            return cls(_normalize("NFKD", data).split(), lang)
         return super().__new__(cls, data)
 
-    def __init__(self, data=None, wl=WORDLIST_ENGLISH):
-        self.wordlist = wl
+    def __init__(self, data=None, lang="english"):
+        self.language = lang
+        self.wordlist = WORDLISTS[lang]
         self._check()
 
     def __str__(self):
@@ -91,12 +91,13 @@ class Mnemonic(tuple):
         return ''.join(bin(self.wordlist.index(x))[2:].zfill(11) for x in self)
 
     @classmethod
-    def from_entropy(cls, ent, wl=WORDLIST_ENGLISH):
+    def _from_entropy(cls, ent, lang):
         """
         Create a Mnemonic from entropy bytes using given wordlist (default
         English)
         """
 
+        wl = WORDLISTS[lang]
         ENT = len(ent) * 8
         assert len(ent) % 4 == 0 and len(ent) >= 16 and len(ent) <= 32,\
             'entropy length must be integer multiple of 32 between 128-256'
@@ -106,7 +107,7 @@ class Mnemonic(tuple):
         entbits = convertbits(ent, 8, 1)
         full = entbits + chk
         l = convertbits(full, 1, 11)
-        return cls(tuple(wl[x] for x in l), wl)
+        return cls(tuple(wl[x] for x in l), lang)
 
     def _check(self):
         """

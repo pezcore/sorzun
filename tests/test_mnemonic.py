@@ -19,7 +19,7 @@ def testvec(request):
     with open(ffn, "r") as fd:
         d = json.load(fd)
     passphrase = normalize("NFKD", d["passphrase"]).encode("utf8")
-    return WORDLISTS[lang], passphrase, d["vectors"]
+    return lang, passphrase, d["vectors"]
 
 def test_entropy_constructor(testvec):
     wl, passphrase, vectors = testvec
@@ -66,7 +66,7 @@ def test_consume():
     i = 0
     while seen != wl:
         ent = os.urandom(20)
-        m = Mnemonic.from_entropy(ent)
+        m = Mnemonic(ent)
         seen |= set(m)
         i += 1
     if i > 3000:
