@@ -19,7 +19,7 @@ def testvec(request):
     with open(ffn, "r") as fd:
         d = json.load(fd)
     passphrase = normalize("NFKD", d["passphrase"]).encode("utf8")
-    return WORDLISTS[lang], passphrase, d["vectors"]
+    return lang, passphrase, d["vectors"]
 
 def test_entropy_constructor(testvec):
     wl, passphrase, vectors = testvec
@@ -29,16 +29,16 @@ def test_entropy_constructor(testvec):
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_iter_constructor(testvec):
-    _, passphrase, vectors = testvec
+    wl, passphrase, vectors = testvec
     for tv in vectors:
-        m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split())
+        m = Mnemonic(normalize("NFKD", tv["mnemonic"]).split(), wl)
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
 def test_string_constructor(testvec):
-    _, passphrase, vectors = testvec
+    wl, passphrase, vectors = testvec
     for tv in vectors:
-        m = Mnemonic(tv["mnemonic"])
+        m = Mnemonic(tv["mnemonic"], wl)
         assert m == tuple(normalize("NFKD", tv["mnemonic"]).split())
         assert m.to_seed(passphrase).hex() == tv["seed"]
 
@@ -66,8 +66,29 @@ def test_consume():
     i = 0
     while seen != wl:
         ent = os.urandom(20)
-        m = Mnemonic.from_entropy(ent)
+        m = Mnemonic(ent)
         seen |= set(m)
         i += 1
     if i > 3000:
         assert False, "Wordlist consumption timeout"
+
+bad_words = [
+    'alien', 'erosion', 'worth', 'minor', 'unusual', 'strike', 'foster',
+    'sad', 'item', 'teach', 'century', 'transfer', 'valley', 'ridge',
+    'chimney', 'number', 'crazy', 'glass', 'crush', 'canal', 'cloth',
+    'seat', 'inmate', 'moon', 'zone', 'laptop', 'inch', 'lecture',
+    'become', 'dinner'
+]
+
+def test_badlen_fail():
+    l = set(range(1, 30)) - {3 * x for x in range(4, 9)}
+    for ll in l:
+        x = bad_words[:ll]
+        with pytest.raises(ValueError, match="Incorrect Mnemonic"):
+            Mnemonic(x)
+
+def test_checksum_fail():
+    for l in {3 * x for x in range(4, 9)}: # use the correct length
+        x = bad_words[:l]
+        with pytest.raises(ValueError, match="Bad mnemonic checksum"):
+            Mnemonic(x)

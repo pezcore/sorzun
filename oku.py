@@ -43,14 +43,13 @@ def main():
     elif args.keydata.isdigit() and len(args.keydata) < 4:
         m = Mnemonic(int(args.keydata))
     elif ' ' in args.keydata:
-        m = Mnemonic.from_string(args.keydata)
+        m = Mnemonic(args.keydata)
     elif args.keydata.startswith('xp'):
         r = node_from_str(args.keydata)
     elif set(args.keydata) <= set('1234567890abcdefABCDEF'):
         seed = bytes.fromhex(args.keydata)
 
     if 'm' in locals():
-        assert m.check(), 'Not a valid Mnemonnic'
         print(f"Mnemonic : {m}")
         seed = m.to_seed()
 
