@@ -47,17 +47,25 @@ class Mnemonic(tuple):
     def __new__(cls, data=20, lang="english"):
         """
         Create a new Mnemonic. Flexible interface takes 2 optional args.
+        Automatically performs validation check, raises Exception describing
+        invalidity in any case where a non-valid BIP32 Mnemonic instance
+        initialization is attempted.
+
+        A valid BIP32 mnemonic must have 128, 160, 192, 224, or 256 bits of
+        entropy and, must contain only words from one the six standard language
+        word lists, and must pass the checksum (last word contains checksum
+        data that most agree with the sequence of other words
 
         Parameters
         ----------
         data : flexible:
             Data to use to initialize the mnemonic.
-            - int:      generate random n byte mnemonic (defalut=20)
-            - btyes:    generate mnemonic using bytes directly as entropy
+            - int:      generate random n byte mnemonic (default=20)
+            - bytes:    generate mnemonic using bytes directly as entropy
                         source
-            - string:   interpret as an already-made space-delimited mnemonic
+            - str:      interpret as an already-made space-delimited mnemonic
                         phrase
-            - iterable: intrepret as iterable of mnemonic words
+            - iterable: interpret as iterable of mnemonic words
         lang : str
             language to use for wordlist
         """
@@ -112,7 +120,7 @@ class Mnemonic(tuple):
     def _check(self):
         """
         Check if a Mnemonic instance is valid. Checks checksum and other
-        valididy criteria specified by BIP39. Raises descriptive exceptions on
+        validity criteria specified by BIP39. Raises descriptive exceptions on
         failure.
         """
         if len(self) not in [12, 15, 18, 21, 24]:
