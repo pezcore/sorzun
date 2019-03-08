@@ -6,6 +6,8 @@ BIP32
 
 import hashlib
 import hmac
+from functools import lru_cache
+from collections import namedtuple
 from .ecc import Point, G, N
 from .base58 import b58enc, b58dec
 from .cashaddr import cashenc
@@ -39,7 +41,7 @@ def node_from_str(s):
     else:
         raise ValueError("bad BIP32 node encoding")
 
-class XPubKey:
+class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
 
     """
     Representation of an extended public key. This consists of an ECDSA public
@@ -49,21 +51,12 @@ class XPubKey:
     making them useful for building key trees. It is not possible to derive any
     hardened child XPubKeys or any XPrivKeys from an XPubKey.
     """
-
-    __slots__ = '_key', '_chaincode'
-
-    def __init__(self, key, chaincode):
-        """
-        Initialize an XPubKey with the ECDSA public key (ecc.Point) and
-        chaincode (bytes)
-        """
-        self._key = key
-        self._chaincode = chaincode
+    __slots__ = ()
 
     @property
     def pubkey(self):
         'Public Key Curve Point (ecc.Point)'
-        return self._key
+        return self.keydata
 
     def addr(self, vbyte=b'\0'):
         """
@@ -81,11 +74,6 @@ class XPubKey:
         'Key ID. HASH160 of compressed serialized PubKey (bytes)'
         return hash160(bytes(self.pubkey))
 
-    @property
-    def chaincode(self):
-        "Chain code (bytes)"
-        return self._chaincode
-
     def __bytes__(self):
         "SEC1 compressed-form byte encoding of the ECDSA pubkey (bytes)"
         return bytes(self.pubkey)
@@ -97,11 +85,11 @@ class XPubKey:
         0x80000000 because XPubs can't derive hardened children.
         """
         assert i < 0x80000000, 'Cannot derive hardened child nodes from xpub'
-        pl = bytes(self._key) + i.to_bytes(4, 'big')
-        I = hmac.new(self._chaincode, pl, 'sha512').digest()
+        pl = bytes(self.pubkey) + i.to_bytes(4, 'big')
+        I = hmac.new(self.chaincode, pl, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
         k = int.from_bytes(IL, 'big')
-        return XPubKey(G * k  + self._key, IR)
+        return XPubKey(G * k  + self.keydata, IR)
 
     def derive(self, path):
         """
@@ -121,7 +109,7 @@ class XPubKey:
         return key
 
     def __str__(self):
-        cc = self._chaincode.hex().upper()
+        cc = self.chaincode.hex().upper()
         keydat = bytes(self).hex().upper()
         return f"chaincode: {cc}\nkeydata  : {keydat}"
 
@@ -138,10 +126,7 @@ class XPrivKey(XPubKey):
     key tree rooted there.
     """
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        # add property for caching the pubkey after its first derivation
-        self._pubkey = None
+    __slots__ = ()
 
     @classmethod
     def from_entropy(cls, seed):
@@ -162,48 +147,46 @@ class XPrivKey(XPubKey):
         plbe = (XPrivKey.__bytes__(self) if i >= 0x80000000
                 else bytes(self.pubkey))
         ibytes = i.to_bytes(4, 'big')
-        I = hmac.new(self._chaincode, plbe + ibytes, 'sha512').digest()
+        I = hmac.new(self.chaincode, plbe + ibytes, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
-        k = (int.from_bytes(IL, 'big') + self._key) % N
+        k = (int.from_bytes(IL, 'big') + self.keydata) % N
         return XPrivKey(k, IR)
 
     def wif(self, vbyte=b'\x80'):
         'WIF string privkey'
-        return b58enc(vbyte + self._key.to_bytes(32, 'big') + b'\x01', True)
+        return b58enc(vbyte + self.keydata.to_bytes(32, 'big') + b'\x01', True)
 
     @property
+    @lru_cache()
     def pubkey(self):
-        if self._pubkey is None:
-            # only derive it once and cache it for later use in an attribute
-            self._pubkey = G * self._key
-        return self._pubkey
+        return G * self.keydata
 
     def __bytes__(self):
         """
         The byte 0x00 followed by the 32-byte big endian bytes representation
         of the private key
         """
-        return b'\0' + self._key.to_bytes(32, 'big')
+        return b'\0' + self.keydata.to_bytes(32, 'big')
 
-class PubBIP32Node(XPubKey):
+_pubnodebase = namedtuple("PubBIP32",
+    "keydata, chaincode, depth, parent_fingerprint, index")
+class PubBIP32Node(_pubnodebase, XPubKey):
     """
     Same as a XPubKey but it also tracks some additional tree position data
     during key derivation and implementes BIP32-standardized serialization
     format.
     """
 
+    __slots__ = ()
     vbytes = b'\x04\x88\xB2\x1E'    # bitcoin xpubkey version bytes in BIP32
 
-    def __init__(self, K, c, depth=0, parent_fingerprint=b'\0' * 4, index=0):
+    def __new__(cls, kd, cc, depth=0, parent_fingerprint=b'\0' * 4, index=0):
         """
         Initialize a new PubBIP32Node with
 
         Parameters
         ----------
-        K : ecc.Point
-            Public ECDSA key
-        c : bytes
-            chaincode
+        keydata : pubkey
         depth : int, optional
             tree depth of this node from the master tree root.
         parent_fingerprint : bytes
@@ -211,30 +194,27 @@ class PubBIP32Node(XPubKey):
         index : int, optional
             child index
         """
-
-        super().__init__(K, c)
-        self.depth = depth
-        self.parent_fingerprint = parent_fingerprint
-        self.index = index
+        return super().__new__(cls, kd, cc, depth, parent_fingerprint, index)
 
     def __bytes__(self):
         " Return the bytes of the BIP32 extended key serialization."
         depth = self.depth.to_bytes(1, 'big')
         fingr = self.parent_fingerprint
         chnum = self.index.to_bytes(4, 'big')
-        ccode = self._chaincode
+        ccode = self.chaincode
         keydt = super().__bytes__()
         return  self.vbytes + depth + fingr + chnum + ccode + keydt
 
     def __str__(self):
         fingr = self.parent_fingerprint.hex().upper()
-        cc = self._chaincode.hex().upper()
+        cc = self.chaincode.hex().upper()
         keydat = super().__bytes__().hex().upper()
         return (f"depth    : {self.depth:d}\nindex    : {self.index:08X}\n"
                 f"parent   : {fingr}\nchaincode: {cc}\nkeydata  : {keydat}\n"
-                f"BIP32 str: {self.bip32_str()}")
+                f"BIP32 str: {self.xpub}")
 
-    def bip32_str(self):
+    @property
+    def xpub(self):
         "BIP32 xpub string encoding"
         return b58enc(bytes(self), True)
 
@@ -242,8 +222,7 @@ class PubBIP32Node(XPubKey):
         xkey = super().ckd(i)
         depth = self.depth + 1
         finger = self.id[:4]
-        kdat = xkey._key
-        return type(self)(kdat, xkey.chaincode, depth, finger, i)
+        return type(self)(*xkey, depth, finger, i)
 
 class PrivBIP32Node(PubBIP32Node, XPrivKey):
     """
@@ -251,12 +230,16 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
     during key derivation and implementes BIP32-standardized serialization
     format.
     """
+    __slots__ = ()
     vbytes = b'\x04\x88\xAD\xE4'
 
-    def bip32_str(self):
-        "BIP32 string encodings. Includes both xprv and xpub"
-        # TODO: research how to do this with super
-        pub = PubBIP32Node(self.pubkey, self.chaincode, self.depth,
-                           self.parent_fingerprint, self.index).bip32_str()
-        prv = super().bip32_str()
-        return f"{prv}\n{'':11}{pub}"
+    @property
+    def xpub(self):
+        return PubBIP32Node(self.pubkey, *self[1:]).xpub
+
+    @property
+    def xprv(self):
+        return b58enc(bytes(self), True)
+
+    def __str__(self):
+        return super().__str__() + f"\n         : {self.xprv}"
