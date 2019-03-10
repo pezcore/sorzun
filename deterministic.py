@@ -8,6 +8,8 @@ import hashlib
 import hmac
 from functools import lru_cache
 from collections import namedtuple
+from os import urandom
+
 from .ecc import Point, G, N
 from .base58 import b58enc, b58dec
 from .cashaddr import cashenc
@@ -52,6 +54,10 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
     hardened child XPubKeys or any XPrivKeys from an XPubKey.
     """
     __slots__ = ()
+
+    def __new__(cls, k, cc=None):
+        cc = urandom(32) if cc is None else cc
+        return super().__new__(cls, k, cc)
 
     @property
     def pubkey(self):
