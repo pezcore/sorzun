@@ -37,11 +37,10 @@ def node_from_str(s):
         assert Kbytes[0] == 0
         k = int.from_bytes(Kbytes, 'big')
         return PrivBIP32Node(k, c, depth, fingerp, index)
-    elif b[:4] == PubBIP32Node.vbytes:
+    if b[:4] == PubBIP32Node.vbytes:
         K = Point.from_bytes(Kbytes)
         return PubBIP32Node(K, c, depth, fingerp, index)
-    else:
-        raise ValueError("bad BIP32 node encoding")
+    raise ValueError("bad BIP32 node encoding")
 
 class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
 
