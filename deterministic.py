@@ -102,6 +102,8 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
         'H'. The integers are the child indices at each level and the 'H'
         signifies that a node is hardened.
         """
+        if not path:
+            return self
         key = self
         for x in path.split('/'):
             x = int(x) if x[-1] != 'H' else int(x[:-1]) + 0x80000000
