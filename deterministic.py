@@ -42,6 +42,9 @@ def node_from_str(s):
         return PubBIP32Node(K, c, depth, fingerp, index)
     raise ValueError("bad BIP32 node encoding")
 
+class ProtocolError(ValueError):
+    pass
+
 class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
 
     """
@@ -83,13 +86,16 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
         "SEC1 compressed-form byte encoding of the ECDSA pubkey (bytes)"
         return bytes(self.pubkey)
 
+
     def ckd(self, i):
         """
         Derive and return the ith indexed child XPubKey. Since children with
         index higher than 0x80000000 are hardened, `i` must be less than
         0x80000000 because XPubs can't derive hardened children.
         """
-        assert i < 0x80000000, 'Cannot derive hardened child nodes from xpub'
+        if not i < 0x80000000:
+            raise ProtocolError("It is disallowed to derive a hardend subkey "
+                "from public node")
         pl = bytes(self.pubkey) + i.to_bytes(4, 'big')
         I = hmac.new(self.chaincode, pl, 'sha512').digest()
         IL, IR = I[:32], I[-32:]
