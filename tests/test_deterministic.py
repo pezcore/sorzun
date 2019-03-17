@@ -36,51 +36,42 @@ def test_xpub_ctor_autocc():
     xpub = XPubKey(k)
     assert xpub.pubkey is k
 
-# xpub661MyMwAqRbcFcThV86HtqwDepp7p2NLhsUuVEiTLcmTCfqLv6Fdp5YVNwsBwWhS93foQgVCR5H5ZAFvg9yRZb7xCpm3eUGgJsBiVm6RnCX
-key = Point.from_bytes(bytes.fromhex(
-    "02d253e2552d249ae7e36d18374953196"
-    "ec554319b99d1b653b854dfa9b4a295a2")
-)
-cc = bytes.fromhex(
-    "6b6a4e1f98b1d5e8261f85827e6c379f11f2e73cd5dfd88cf85e97ec8dbe9f61"
-)
+with open(os.path.join(test_dir, "vectors", "ku_det.json"), "r") as fd:
+    ku_testvec = json.load(fd)
 
+@pytest.fixture(scope="module")
+def xpub():
+    pubkey_bytes = bytes.fromhex(ku_testvec["key_pair_as_sec"])
+    pubkey = Point.from_bytes(pubkey_bytes)
+    cc = bytes.fromhex(ku_testvec["chain_code"])
+    return XPubKey(pubkey, cc)
 
-def test_xpub_addr():
-    xpub = XPubKey(key, cc)
-    assert xpub.addr() == "1A7gUzu8SZR7wBkSWFHY6Q6JXc2tGtBVQw"
+def test_xpub_addr(xpub):
+    assert xpub.addr() == ku_testvec["BTC_address"]
 
-def test_xpub_casharddr():
-    xpub = XPubKey(key, cc)
-    assert xpub.cashaddr() == ( "bitcoincash:"
-        "qp3le9s66xma3svpr3at440jazfk7s8rpq6yqapn67"
+def test_xpub_casharddr(xpub):
+    assert xpub.cashaddr() == ("bitcoincash:"
+        "qr6hv2medj2c0yvpqdpr7vz25slwt0vmuywvkgjuvr"
     )
 
-def test_xpub_id():
-    xpub = XPubKey(key, cc)
-    assert xpub.id == bytes.fromhex("63fc961ad1b7d8c1811c7abad5f2e8936f40e308")
+def test_xpub_id(xpub):
+    assert xpub.id == bytes.fromhex(ku_testvec["hash160"])
 
-def test_xpub_bytes():
-    xpub = XPubKey(key, cc)
-    assert bytes(xpub) == bytes.fromhex(
-        "02d253e2552d249ae7e36d18374953196"
-        "ec554319b99d1b653b854dfa9b4a295a2"
-    )
+def test_xpub_bytes(xpub):
+    assert bytes(xpub) == bytes.fromhex(ku_testvec["key_pair_as_sec"])
 
-def test_xpub_ckd():
-    xpub = XPubKey(key, cc)
-    der = xpub.ckd(44)
-    assert der.addr() == "18ENWVy17pZQ1iKLwhM77XcWYHPamUvwbB"
-    assert der.id == bytes.fromhex("4f503e12beb6bd7665c1e8a98d0227e41c600e32")
-    assert der.cashaddr() == ("bitcoincash:"
-        "qp84q0sjh6mt6an9c852nrgzyljpccqwxg294e8elf"
-    )
-    assert bytes(der) == bytes.fromhex(
-        "02419d361302c210232b86291bd323921"
-        "ef6afa9d2e2bb32c608e760ae84b95d0f"
-    )
+def test_xpub_ckd(xpub):
+    for leaf in ku_testvec["leaves"]:
+        if "H" in leaf["path"]:
+            continue # dont attempt hardened derivation from XPubKey
+        der = xpub.derive(leaf["path"].split()[0])
+        print(f"XPubKey:\n{xpub}")
+        print("Derivation path ", leaf["path"].split()[0])
+        print(f"derived keys\n{der}")
+        assert der.addr() == leaf["BTC_address"]
+        assert der.id == bytes.fromhex(leaf["hash160"])
+        assert bytes(der) == bytes.fromhex(leaf["key_pair_as_sec"])
 
-def test_xpub_ckd_disallow_harddev():
-    xpub = XPubKey(key, cc)
+def test_xpub_ckd_disallow_harddev(xpub):
     with pytest.raises(ProtocolError, match="It is disallowed to derive a"):
         der = xpub.ckd(2 ** 31)
