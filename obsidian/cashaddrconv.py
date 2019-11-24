@@ -4,8 +4,8 @@ import argparse
 from .cashaddr import cashenc, cashdec, is_cashaddr
 from .base58 import b58enc, b58dec
 
-b58checkenc = lambda x: b58enc(x, True)
-b58checkdec = lambda x: b58dec(x, True)
+_b58checkenc = lambda x: b58enc(x, True)
+_b58checkdec = lambda x: b58dec(x, True)
 
 
 def convert_word(word):
@@ -14,8 +14,8 @@ def convert_word(word):
     both legacy and cashaddr formatted addresses corresponding to the hash
     """
     intype, decfun, encfun, p2shvbyte = (
-        ("CASHAD", cashdec, b58checkenc, b"\5") if is_cashaddr(word) else
-        ("LEGACY", b58checkdec, cashenc, b"\10")
+        ("CASHAD", cashdec, _b58checkenc, b"\5") if is_cashaddr(word) else
+        ("LEGACY", _b58checkdec, cashenc, b"\10")
     )
     pl = decfun(word)
     ivbyte, _hash = pl[:1], pl[1:]
