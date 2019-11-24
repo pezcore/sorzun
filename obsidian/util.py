@@ -1,9 +1,12 @@
 "Small utility module for some common functions"
 
-def convertbits(data, frombits, tobits, pad=True):
+def convertbits(
+        data: bytes, frombits: int, tobits: int, pad: bool=True
+    ) -> bytes:
     """
-    Convert an iterable of non-negative integers from base 2^`frombits` to a
-    list of base 2^`tobits` symbols
+    Convert an iterable of non-negative integers `data` from base
+    :math:`2^\mathrm{frombits}` to a list of base :math:`2^\mathrm{tobits}`
+    symbols
     """
     acc = 0
     bits = 0
