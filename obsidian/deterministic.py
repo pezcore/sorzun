@@ -14,21 +14,30 @@ from .ecc import Point, G, N
 from .base58 import b58enc, b58dec
 from .cashaddr import cashenc
 
-def hash160(msg):
+def hash160(msg: bytes) -> bytes:
     """
     Compute standard HASH160 of message bytes. This is the RIPEMD160 hash of
-    the SHA256 hash of they message bytes. Return bytes.
+    the SHA256 hash of they message bytes.
+
+    args:
+        msg: message bytes to hash
+
+    returns:
+        bytes
     """
     shadigest = hashlib.new('sha256', msg).digest()
     return hashlib.new('ripemd160', shadigest).digest()
 
-def node_from_str(s):
+def node_from_str(s: str):
     """
-    Create and return a BIP32 Node from a BIP32 xkey string. This takes a `str`
-    encoded as xprv or xprv and returns the deserialized BIP32Node
-    instance. Detection of key type is automatic: xprv strings return
-    PrivBIP32Nodes and xpub strings return PubBIP32Nodes. Only Bitcoin style
-    (xpub and xpriv) formats are supported.
+    Create and return a BIP32 Node from a BIP32 xkey string. This takes an
+    string encoded according to the `BIP 32 Serialization Format`_ and returns
+    the deserialized BIP32Node instance.  Detection of key type is automatic:
+    ``xprv`` strings return :class:`PrivBIP32Node` and xpub strings return
+    :class:`PubBIP32Node`. Only Bitcoin style (xpub and xpriv) formats are
+    supported.
+
+    .. _BIP 32 Serialization Format: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Serialization_format
     """
     b = b58dec(s, True)
     c, Kbytes = b[-65:-33], b[-33:]
@@ -49,11 +58,12 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
 
     """
     Representation of an extended public key. This consists of an ECDSA public
-    key and a 256 bit chaincode. The primary use of the XPubKey is key
-    derivation. Each XPubKey can deterministically derive 2^31 non-hardened
-    child XPubKeys each with their own unique chaincode and ECDSA public key
-    making them useful for building key trees. It is not possible to derive any
-    hardened child XPubKeys or any XPrivKeys from an XPubKey.
+    key and a 256 bit chaincode. The primary use of the :class:`XPubKey` is key
+    derivation. Each XPubKey can deterministically derive :math:`2^{31}`
+    non-hardened child XPubKeys each with their own unique chaincode and ECDSA
+    public key making them useful for building key trees. It is not possible to
+    derive any hardened child XPubKeys or any :class:`XPrivKey` s from an
+    :class:`XPubKey`.
     """
     __slots__ = ()
 
@@ -66,9 +76,9 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
         'Public Key Curve Point (ecc.Point)'
         return self.keydata
 
-    def addr(self, vbyte=b'\0'):
+    def addr(self, vbyte: bytes = b'\0') -> str:
         """
-        Bitcoin P2PKH address with version byte `vbyte`. A `str` is returned
+        Bitcoin P2PKH address with version byte `vbyte`. A ``str`` is returned
         using base58check encoding
         """
         return b58enc(vbyte + self.id, True)
@@ -87,11 +97,12 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
         return bytes(self.pubkey)
 
 
-    def ckd(self, i):
+    def ckd(self, i: int) -> "XPubKey":
         """
-        Derive and return the ith indexed child XPubKey. Since children with
-        index higher than 0x80000000 are hardened, `i` must be less than
-        0x80000000 because XPubs can't derive hardened children.
+        Derive and return the `i`:superscript:`th` indexed child
+        :class:`XPubKey`. Since children with index higher than ``0x80000000``
+        are hardened, `i` must be less than ``0x80000000`` because XPubs can't
+        derive hardened children.
         """
         if not i < 0x80000000:
             raise ProtocolError("It is disallowed to derive a hardend subkey "
@@ -106,6 +117,8 @@ class XPubKey(namedtuple("XKey", ["keydata", "chaincode"])):
         """
         Given a string, `path`, traverse the key tree deriving each subsequent
         node. Path is specified as strings using POSIX-like format:
+
+        .. code-block::
 
             a[H]/b[H]/c[H]/d[H]/...
 
@@ -131,12 +144,13 @@ class XPrivKey(XPubKey):
     Similar to XPubKey, except that the encapsulated key is an ECDSA private
     key. This extends XPubKey with private key only capabilities such as
     exposing WIF. Also, unlike XPubKey, XPrivKey **is** capable of deriving
-    hardened children (so it can derive all 2 ^ 32 child keys)
+    hardened children (so it can derive all :math:`2^{32}` child keys)
 
-    **WARNING** If this Key is derived from a non-hardened parent node, and the
-    non-hardened parent node's chaincode is known, then leaking this node's
-    private key also leaks the parent's private key and therefore the entire
-    key tree rooted there.
+    .. warning::
+        If this Key is derived from a non-hardened parent node, and the
+        non-hardened parent node's chaincode is known, then leaking this node's
+        private key also leaks the parent's private key and therefore the
+        entire key tree rooted there.
     """
 
     __slots__ = ()
@@ -152,10 +166,17 @@ class XPrivKey(XPubKey):
         assert k and k < N, 'Invalid privkey, use  different entropy'
         return cls(k, c)
 
-    def ckd(self, i):
+    def ckd(self, i: int):
         """
-        Derive and return the ith child XPrivKey. Note. indices over 0x80000000
-        are hardened children.
+        Derive and return the `i`:superscript:`th` child XPrivKey.
+
+        args:
+            i: child key index
+
+        returns:
+            A new XPrivKey
+        Note:
+            indices over ``0x80000000`` are hardened children.
         """
         plbe = (XPrivKey.__bytes__(self) if i >= 0x80000000
                 else bytes(self.pubkey))
@@ -242,6 +263,9 @@ class PrivBIP32Node(PubBIP32Node, XPrivKey):
     Same as a XPrivKey but it also tracks some additional tree position data
     during key derivation and implementes BIP32-standardized serialization
     format.
+
+    .. inheritance-diagram:: PrivBIP32Node
+       :parts: 1
     """
     __slots__ = ()
     vbytes = b'\x04\x88\xAD\xE4'
