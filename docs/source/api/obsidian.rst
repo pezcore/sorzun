@@ -1,60 +1,46 @@
-obsidian package
-================
+:mod:`obsidian` package
+=======================
 
 .. automodule:: obsidian
    :members:
    :show-inheritance:
 
-obsidian.base58 module
+:mod:`base58` module
 ----------------------
 
 .. automodule:: obsidian.base58
    :members:
    :show-inheritance:
 
-obsidian.cashaddr module
+:mod:`cashaddr` module
 ------------------------
 
 .. automodule:: obsidian.cashaddr
    :members:
    :show-inheritance:
 
-obsidian.cashaddrconv module
-----------------------------
-
-.. automodule:: obsidian.cashaddrconv
-   :members:
-   :show-inheritance:
-
-obsidian.deterministic module
+:mod:`deterministic` module
 -----------------------------
 
 .. automodule:: obsidian.deterministic
    :members:
    :show-inheritance:
 
-obsidian.ecc module
+:mod:`ecc` module
 -------------------
 
 .. automodule:: obsidian.ecc
    :members:
    :show-inheritance:
 
-obsidian.mnemonic module
+:mod:`mnemonic` module
 ------------------------
 
 .. automodule:: obsidian.mnemonic
    :members:
    :show-inheritance:
 
-obsidian.oku module
--------------------
-
-.. automodule:: obsidian.oku
-   :members:
-   :show-inheritance:
-
-obsidian.util module
+:mod:`util` module
 --------------------
 
 .. automodule:: obsidian.util

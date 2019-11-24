@@ -32,6 +32,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -41,7 +42,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
-autoclass_content = "both"
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -56,7 +56,7 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 html_theme_options = {
-    "font_family" : "DejaVu Sans",
+    "font_family" : "Ubuntu, DejaVu Sans",
     "note_bg" : "#99e6a8",
     "page_width" : "150em",
     "body_max_width" : "50em",
