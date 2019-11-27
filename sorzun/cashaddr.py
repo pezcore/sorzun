@@ -116,7 +116,7 @@ def calculate_checksum(prefix: str, payload: bytes) -> bytes:
     """
     With a given prefix string `prefix`, and B32 payload bytes `payload`,
     return the cashaddr checksum bytes. The B32 payload bytes are the payload
-    message octets expanded with :func:`obsidian.util.convertbits` to 5-bit
+    message octets expanded with :func:`sorzun.util.convertbits` to 5-bit
     symbols represented as bytes.
     """
     poly = polymod(prefix_expand(prefix) + payload + b"\0"* 8)

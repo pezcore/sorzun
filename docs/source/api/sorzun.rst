@@ -1,48 +1,48 @@
-:mod:`obsidian` package
+:mod:`sorzun` package
 =======================
 
-.. automodule:: obsidian
+.. automodule:: sorzun
    :members:
    :show-inheritance:
 
 :mod:`base58` module
 ----------------------
 
-.. automodule:: obsidian.base58
+.. automodule:: sorzun.base58
    :members:
    :show-inheritance:
 
 :mod:`cashaddr` module
 ------------------------
 
-.. automodule:: obsidian.cashaddr
+.. automodule:: sorzun.cashaddr
    :members:
    :show-inheritance:
 
 :mod:`deterministic` module
 -----------------------------
 
-.. automodule:: obsidian.deterministic
+.. automodule:: sorzun.deterministic
    :members:
    :show-inheritance:
 
 :mod:`ecc` module
 -------------------
 
-.. automodule:: obsidian.ecc
+.. automodule:: sorzun.ecc
    :members:
    :show-inheritance:
 
 :mod:`mnemonic` module
 ------------------------
 
-.. automodule:: obsidian.mnemonic
+.. automodule:: sorzun.mnemonic
    :members:
    :show-inheritance:
 
 :mod:`util` module
 --------------------
 
-.. automodule:: obsidian.util
+.. automodule:: sorzun.util
    :members:
    :show-inheritance:

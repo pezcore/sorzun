@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'obsidian'
+project = 'sorzun'
 copyright = '2019, Tom Boyd'
 author = 'Tom Boyd'
 
