@@ -1,3 +1,6 @@
 *.swp
 __pycache__
 untracked
+build
+dist
+sorzun.egg-info
