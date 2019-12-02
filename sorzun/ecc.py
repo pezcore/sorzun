@@ -79,7 +79,7 @@ class Point(namedtuple('Point', 'x, y')):
 
     @classmethod
     def from_bytes(cls, b):
-        'returns a Point from a SEC1 compressed encoded byte sequence'
+        'returns a :class:`Point` from a SEC1-compressed encoded byte sequence'
         x = int.from_bytes(b[1:33], 'big')
         beta = pow(int(x*x*x+A*x+B), int((P+1)//4), int(P))
         y = (P-beta) if ((beta + b[0]) % 2) else beta
