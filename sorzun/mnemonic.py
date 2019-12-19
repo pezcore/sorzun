@@ -71,10 +71,8 @@ class Mnemonic(tuple):
     passed in determines the initialization behavior:
 
     - :class:`int`:   generate random `data`-byte mnemonic (default=20)
-    - :class:`bytes`: generate mnemonic using `data` bytes directly as entropy
-                      source
-    - :class:`str`:   interpret as an already-made space-delimited mnemonic
-                      phrase
+    - :class:`bytes`: generate mnemonic using `data` bytes directly as entropy source
+    - :class:`str`:   interpret as an already-made space-delimited mnemonic phrase
     - iterable:       interpret as iterable of mnemonic words
 
 
