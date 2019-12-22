@@ -5,7 +5,7 @@ import math
 
 import pytest
 
-from ..mnemonic import Mnemonic, WORDLISTS
+from sorzun.mnemonic import Mnemonic, WORDLISTS
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
 

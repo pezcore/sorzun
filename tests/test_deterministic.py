@@ -3,8 +3,9 @@ import json
 
 import pytest
 
-from ..deterministic import XPubKey, XPrivKey, PrivBIP32Node, PubBIP32Node, ProtocolError
-from ..ecc import Point
+from sorzun.deterministic import (
+    XPubKey, XPrivKey, PrivBIP32Node, PubBIP32Node, ProtocolError)
+from sorzun.ecc import Point
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
 

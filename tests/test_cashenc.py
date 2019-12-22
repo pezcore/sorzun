@@ -7,8 +7,8 @@ import json
 import pytest
 
 # pylint: disable=invalid-name
-from ..cashaddr import cashenc, cashdec, SIZE_CODE
-from ..cashaddrconv import convert_word
+from sorzun.cashaddr import cashenc, cashdec
+from sorzun.cashaddrconv import convert_word
 
 #=========================== Load Test Vectors ===============================#
 
@@ -36,6 +36,9 @@ def legacy_pairs():
     ]
 
 #============================= TEST FUNCTIONS ================================#
+SIZE_CODE = {
+    160 : 0, 192 : 1, 224 : 2, 256 : 3, 320 : 4, 384 : 5, 448 : 6, 512 : 7
+}
 
 def test_cashenc():
     """

@@ -4,3 +4,4 @@ untracked
 build
 dist
 sorzun.egg-info
+.pytest_cache
